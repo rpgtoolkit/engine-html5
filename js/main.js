@@ -2,10 +2,12 @@
  * The basis for the logic in this file came from:
  *  http://codeincomplete.com/posts/2013/12/4/javascript_game_foundations_the_game_loop/ 
  */
-
+ 
 if (showFPS) {
   var fpsmeter = new FPSMeter();
 }
+
+var runGameLoop = false; // Must explictly start the game loop.
 
 var now;
 var dt = 0;
@@ -14,6 +16,8 @@ var step = 1 / 60;
 
 var screen;
 var canvas = document.getElementById("canvas");
+
+var currentBoard;
 
 // TODO: define a complete player state object.
 var player = {
@@ -32,7 +36,11 @@ function setup() {
   // Screen settings.
   canvas.width = 640;
   canvas.height = 480;
-  screen = new screenRenderer(new board(PATH_BOARD + "test.brd.json"));
+  
+  currentBoard = new board(PATH_BOARD + "test.brd.json");
+  player.x = currentBoard.startingPositionX;
+  player.y = currentBoard.startingPositionY;
+  screen = new screenRenderer(currentBoard);
 
   // Game input settings.
   document.addEventListener("keydown", onKeyDown, false);
@@ -52,7 +60,16 @@ function setup() {
   }
 }
 
-/**
+function start() {
+  requestAnimationFrame(frame);
+  runGameLoop = true;
+}
+
+function stop() {
+  runGameLoop = false;
+}
+
+/**q
  * Processes a frame of game logic.
  * 
  * @returns {undefined}
@@ -70,7 +87,10 @@ function frame() {
   }
   render(dt);
   last = now;
-  requestAnimationFrame(frame);
+  
+  if (runGameLoop) {
+    requestAnimationFrame(frame);
+  }
 
   if (showFPS) {
     fpsmeter.tick();
@@ -122,4 +142,3 @@ function timestamp() {
  * Main entry point for the game.
  */
 setup();
-//requestAnimationFrame(frame);

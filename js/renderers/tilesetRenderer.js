@@ -9,12 +9,12 @@ function tilesetRenderer(tileset) {
 }
 
 tilesetRenderer.prototype.render = function (cnv) {
-  var cnv = cnv || document.createElement('canvas');
+  var cnv = cnv || document.createElement("canvas");
 
   cnv.width = this.size.x;
   cnv.height = this.size.y;
 
-  var context = cnv.getContext('2d');
+  var context = cnv.getContext("2d");
 
   var offset = {
     x: 0,

@@ -15,7 +15,7 @@ screenRenderer.prototype.render = function (cnv) {
   context.fillStyle = "#000000";
   context.fillRect(0, 0, cnv.width, cnv.height);
 
-  var layer, row, tile, data, renderer;
+  var layer, row, tile, source, data, renderer;
 
   // Loop through layers.
   for (var i = 0; i < this.board.layerCount; i++) {
@@ -31,10 +31,11 @@ screenRenderer.prototype.render = function (cnv) {
       // x axis
       for (var x = 0; x < row.length; x++) {
         tile = row[x];
+        source = this.board.tileNames[tile];
 
-        if (tile) {
+        if (source) {
           // extract data (filename and index)
-          data = this.getTileData(tile);
+          data = this.getTileData(source);
 
           // load tileset
           if (this.tilesets[data.tileset] === undefined) {
@@ -44,7 +45,7 @@ screenRenderer.prototype.render = function (cnv) {
           renderer = new tilesetRenderer(this.tilesets[data.tileset]);
 
           // render tile to board canvas
-          renderer.renderTile(context, data['tile'] - 1, x * 32, y * 32);
+          renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);
         }
       }
     }
