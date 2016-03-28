@@ -1,9 +1,9 @@
-function boardRenderer(board) {
+function screenRenderer(board) {
   this.board = board;
   this.tilesets = {};
 }
 
-boardRenderer.prototype.render = function (cnv) {
+screenRenderer.prototype.render = function (cnv) {
   var cnv = cnv || document.createElement("canvas");
 
   cnv.width = this.board.width * 32;
@@ -11,12 +11,19 @@ boardRenderer.prototype.render = function (cnv) {
 
   var context = cnv.getContext("2d");
 
+  // Draw a black background.  
+  context.fillStyle = "#000000";
+  context.fillRect(0, 0, cnv.width, cnv.height);
+
   var layer, row, tile, data, renderer;
 
-  // loop through layers
+  // Loop through layers.
   for (var i = 0; i < this.board.layerCount; i++) {
     layer = this.board.tiles[i];
 
+    /*
+     * Step 1: Render this layer's tiles. 
+     */
     // y axis
     for (var y = 0; y < layer.length; y++) {
       row = layer[y];
@@ -41,12 +48,37 @@ boardRenderer.prototype.render = function (cnv) {
         }
       }
     }
+    
+    /*
+     * Step 2: Render items.
+     */
+    // TODO: render any items on this layer.
+    
+    /*
+     * Step 3: Render npcs.
+     */
+    // TODO: render any npcs on this layer.
+    
+    /*
+     * Step 4: Render the player above everything on this layer.
+     */
+    // TODO: if the player is on this layer render them now.
+    if (player.layer === i) {
+      // Draw a black background.  
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(player.x, player.y, 25, 25);
+    }
   }
+  
+  /*
+   * Step 5: Message windows etc?
+   */
+  // TODO: figure out how message windows and menus will be rendered.
 
   return cnv;
 };
 
-boardRenderer.prototype.getTileData = function (source) {
+screenRenderer.prototype.getTileData = function (source) {
   var splitPoint = source.indexOf(".tst") + 4;
   return {
     tileset: source.substring(0, splitPoint),
