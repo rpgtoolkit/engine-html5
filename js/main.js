@@ -49,7 +49,13 @@ var player = {
       soundEffect: "",
       animationWidth: 50
     }
-  }
+  },
+  collisionVector: [
+    {
+      x: 0,
+      y: 0
+    }
+  ]
 };
 
 /**

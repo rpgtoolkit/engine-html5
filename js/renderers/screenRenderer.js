@@ -80,9 +80,44 @@ screenRenderer.prototype.render = function (cnv) {
   }
 
   /*
-   * Step 5: Message windows etc?
+   * Step 5: (Optional) Render Vectors.
    */
-  // TODO: figure out how message windows and menus will be rendered.
+  this.board.vectors.forEach(function (vector) {
+    var haveMoved = false;
+    context.strokeStyle = "#FFFFFF";
+    context.lineWidth = 2.0;
+    context.beginPath();
+    vector.points.forEach(function (point) {
+      if (!haveMoved) {
+        context.moveTo(point.x, point.y);
+        haveMoved = true;
+      } else {
+        context.lineTo(point.x, point.y);
+      }
+    }, this);
+    context.closePath();
+    context.stroke();
+  }, this);
+  
+  /*
+   * Step 6: (Optional) Render Programs.
+   */
+  this.board.programs.forEach(function (program) {
+    var haveMoved = false;
+    context.strokeStyle = "#FFFF00";
+    context.lineWidth = 2.0;
+    context.beginPath();
+    program.points.forEach(function (point) {
+      if (!haveMoved) {
+        context.moveTo(point.x, point.y);
+        haveMoved = true;
+      } else {
+        context.lineTo(point.x, point.y);
+      }
+    }, this);
+    context.closePath();
+    context.stroke();
+  }, this);
 
   return cnv;
 };
