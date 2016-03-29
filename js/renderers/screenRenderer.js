@@ -30,36 +30,39 @@ screenRenderer.prototype.render = function (cnv) {
 
       // x axis
       for (var x = 0; x < row.length; x++) {
-        tile = row[x];
-        source = this.board.tileNames[tile];
+        tile = row[x] - 1;
 
-        if (source) {
-          // extract data (filename and index)
-          data = this.getTileData(source);
+        if (tile > -1) {
+          source = this.board.tileNames[tile];
 
-          // load tileset
-          if (this.tilesets[data.tileset] === undefined) {
-            this.tilesets[data.tileset] = new tileset(PATH_TILESET + data.tileset);
+          if (source) {
+            // extract data (filename and index)
+            data = this.getTileData(source);
+
+            // load tileset
+            if (this.tilesets[data.tileset] === undefined) {
+              this.tilesets[data.tileset] = new tileset(PATH_TILESET + data.tileset);
+            }
+
+            renderer = new tilesetRenderer(this.tilesets[data.tileset]);
+
+            // render tile to board canvas
+            renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);
           }
-
-          renderer = new tilesetRenderer(this.tilesets[data.tileset]);
-
-          // render tile to board canvas
-          renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);
         }
       }
     }
-    
+
     /*
      * Step 2: Render items.
      */
     // TODO: render any items on this layer.
-    
+
     /*
      * Step 3: Render npcs.
      */
     // TODO: render any npcs on this layer.
-    
+
     /*
      * Step 4: Render the player above everything on this layer.
      */
@@ -67,10 +70,15 @@ screenRenderer.prototype.render = function (cnv) {
     if (player.layer === i) {
       // Draw a black background.  
       context.fillStyle = "#FFFFFF";
-      context.fillRect(player.x, player.y, 25, 25);
+      context.drawImage(
+              player.graphics.south.frames[player.graphics.frameIndex],
+              player.x,
+              player.y,
+              player.graphics.south.animationWidth,
+              player.graphics.south.animationHeight);
     }
   }
-  
+
   /*
    * Step 5: Message windows etc?
    */

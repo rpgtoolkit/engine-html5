@@ -34,7 +34,7 @@ function board(filename) {
             skipTiles = (-tileIndex) - 1;
 
             // get tile to be repeated
-            tileIndex = board.tileIndex.shift() - 1;
+            tileIndex = board.tileIndex.shift();
           }
           
           currentColumn.push(tileIndex);

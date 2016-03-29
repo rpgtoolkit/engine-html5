@@ -19,12 +19,37 @@ var canvas = document.getElementById("canvas");
 
 var currentBoard;
 
+var frame1 = new Image();
+frame1.src = "../game/TheWizardsTower-JS/Bitmap/Hero_world_south_walk1.png";
+
+var frame2 = new Image();
+frame2.src = "../game/TheWizardsTower-JS/Bitmap/Hero_world_south_walk2.png";
+
 // TODO: define a complete player state object.
 var player = {
   x: 0,
   y: 0,
   layer: 0,
-  input: {up: false, down: false, left: false, right: false}
+  input: {
+    up: false, 
+    down: false, 
+    left: false, 
+    right: false
+  },
+  graphics: {
+    elapsed: 0,
+    frameIndex: 0,
+    south: {
+      frameRate: 0.5,
+      frames: [
+          frame1,
+          frame2
+      ],
+      animationHeight: 50,
+      soundEffect: "",
+      animationWidth: 50
+    }
+  }
 };
 
 /**
@@ -37,7 +62,7 @@ function setup() {
   canvas.width = 640;
   canvas.height = 480;
   
-  currentBoard = new board(PATH_BOARD + "test.brd.json");
+  currentBoard = new board(PATH_BOARD + "Room0.brd.json");
   player.x = currentBoard.startingPositionX;
   player.y = currentBoard.startingPositionY;
   screen = new screenRenderer(currentBoard);
@@ -56,7 +81,7 @@ function setup() {
   fileref.setAttribute("src", "../game/TheWizardsTower-JS/Prg/INTRO.js");
 
   if (typeof fileref !== "undefined") {
-    document.getElementsByTagName("head")[0].appendChild(fileref)
+    document.getElementsByTagName("head")[0].appendChild(fileref);
   }
 }
 
@@ -75,6 +100,8 @@ function stop() {
  * @returns {undefined}
  */
 function frame() {
+  var doRender = false;
+  
   if (showFPS) {
     fpsmeter.tickStart();
   }
@@ -83,9 +110,13 @@ function frame() {
   dt = dt + Math.min(1, (now - last) / 1000);
   while (dt > step) {
     dt = dt - step;
-    update(step);
+    doRender = update(step);
   }
-  render(dt);
+  
+  if (doRender) {
+    render(dt);
+  }
+  
   last = now;
   
   if (runGameLoop) {
@@ -104,6 +135,8 @@ function frame() {
  * @returns {undefined}
  */
 function update(step) {
+  var updated = false;
+  
   /*
    * Step 1: Process player input.
    */
@@ -111,13 +144,34 @@ function update(step) {
   // the players actual location in the game not just on the screen.
   if (player.input.up) {
     player.y -= 1;
+    updated = true;
   } else if (player.input.down) {
     player.y += 1;
+    updated = true;
   } else if (player.input.left) {
     player.x -= 1;
+    updated = true;
   } else if (player.input.right) {
     player.x += 1;
+    updated = true;
   }
+  
+  // temp rubbish 
+  if (updated) {
+    player.graphics.elapsed += step;
+    
+    if (player.graphics.elapsed >= player.graphics.south.frameRate) {
+      player.graphics.elapsed = player.graphics.elapsed - player.graphics.south.frameRate;
+      var frame = player.graphics.frameIndex + 1;
+      if (frame < player.graphics.south.frames.length) {
+        player.graphics.frameIndex = frame;
+      } else {
+        player.graphics.frameIndex = 0;
+      }
+    }
+  }
+  
+  return updated;
 }
 
 /**

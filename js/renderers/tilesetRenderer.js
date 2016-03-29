@@ -1,10 +1,9 @@
 function tilesetRenderer(tileset) {
   this.tileset = tileset;
 
-  // calculate tileset dimensions (with fixed with of 9 tiles)
   this.size = {
-    x: 288,
-    y: Math.ceil(this.tileset.count / 9) * 32
+    x: this.tileset.count * 32,
+    y: 32
   };
 }
 
