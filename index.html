@@ -4,7 +4,7 @@
 
     <!-- TODO: Supply main file here. -->
     <script type="text/javascript">
-      var showFPS = true;
+      var showFPS = false;
 
       var PATH_BOARD = "../game/TheWizardsTower-JS/Boards/";
       var PATH_TILESET = "../game/TheWizardsTower-JS/Tiles/";
@@ -13,6 +13,7 @@
     <!-- I/O Libraries -->
     <script src="js/io/binaryIO.js"></script>
     <script src="js/formats/board.js"></script>
+    <script src="js/formats/player.js"></script>
     <script src="js/formats/tileset.js"></script>
     <script src="js/renderers/screenRenderer.js"></script>
     <script src="js/renderers/tilesetRenderer.js"></script>
@@ -26,7 +27,7 @@
   <body>
     <canvas id="canvas" width="0" height="0"></canvas> 
 
-    <!-- Main Game Logic -->
-    <script src="js/main.js"></script>
+    <!-- Import the engine game logic. -->
+    <script src="js/engine.js"></script>
   </body>
 </html>

@@ -67,15 +67,25 @@ screenRenderer.prototype.render = function (cnv) {
      * Step 4: Render the player above everything on this layer.
      */
     // TODO: if the player is on this layer render them now.
-    if (player.layer === i) {
-      // Draw a black background.  
-      context.fillStyle = "#FFFFFF";
+    if (currentPlayer.layer === i) {
+      var frame = currentPlayer.graphics.active.frames[currentPlayer.graphics.frameIndex];
       context.drawImage(
-              player.graphics.south.frames[player.graphics.frameIndex],
-              player.x,
-              player.y,
-              player.graphics.south.animationWidth,
-              player.graphics.south.animationHeight);
+              frame,
+              currentPlayer.x - (frame.width / 2),
+              currentPlayer.y - (frame.height / 2),
+              currentPlayer.graphics.active.animationWidth,
+              currentPlayer.graphics.active.animationHeight);
+
+      // Draw player collision rectangle.
+      context.beginPath();
+      context.lineWidth="2";
+      context.strokeStyle="#FFFFFF";
+      context.rect(
+              currentPlayer.x - (currentPlayer.boundingBox.width / 2),
+              currentPlayer.y + (currentPlayer.boundingBox.height),
+              currentPlayer.boundingBox.width,
+              currentPlayer.boundingBox.height);
+      context.stroke();
     }
   }
 
@@ -98,7 +108,7 @@ screenRenderer.prototype.render = function (cnv) {
     context.closePath();
     context.stroke();
   }, this);
-  
+
   /*
    * Step 6: (Optional) Render Programs.
    */

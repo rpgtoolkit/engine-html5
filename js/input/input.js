@@ -27,19 +27,19 @@ var KEY = {
 function onKeyDown(event) {
   switch (event.keyCode) {
     case KEY.UP:
-      player.input.up = true;
+      currentPlayer.input.up = true;
       event.preventDefault();
       break;
     case KEY.DOWN:
-      player.input.down = true;
+      currentPlayer.input.down = true;
       event.preventDefault();
       break;
     case KEY.LEFT:
-      player.input.left = true;
+      currentPlayer.input.left = true;
       event.preventDefault();
       break;
     case KEY.RIGHT:
-      player.input.right = true;
+      currentPlayer.input.right = true;
       event.preventDefault();
       break;
   }
@@ -53,19 +53,19 @@ function onKeyDown(event) {
 function onKeyUp(event) {
   switch (event.keyCode) {
     case KEY.UP:
-      player.input.up = false;
+      currentPlayer.input.up = false;
       event.preventDefault();
       break;
     case KEY.DOWN:
-      player.input.down = false;
+      currentPlayer.input.down = false;
       event.preventDefault();
       break;
     case KEY.LEFT:
-      player.input.left = false;
+      currentPlayer.input.left = false;
       event.preventDefault();
       break;
     case KEY.RIGHT:
-      player.input.right = false;
+      currentPlayer.input.right = false;
       event.preventDefault();
       break;
   }

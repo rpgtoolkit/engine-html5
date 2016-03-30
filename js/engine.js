@@ -18,45 +18,7 @@ var screen;
 var canvas = document.getElementById("canvas");
 
 var currentBoard;
-
-var frame1 = new Image();
-frame1.src = "../game/TheWizardsTower-JS/Bitmap/Hero_world_south_walk1.png";
-
-var frame2 = new Image();
-frame2.src = "../game/TheWizardsTower-JS/Bitmap/Hero_world_south_walk2.png";
-
-// TODO: define a complete player state object.
-var player = {
-  x: 0,
-  y: 0,
-  layer: 0,
-  input: {
-    up: false, 
-    down: false, 
-    left: false, 
-    right: false
-  },
-  graphics: {
-    elapsed: 0,
-    frameIndex: 0,
-    south: {
-      frameRate: 0.5,
-      frames: [
-          frame1,
-          frame2
-      ],
-      animationHeight: 50,
-      soundEffect: "",
-      animationWidth: 50
-    }
-  },
-  collisionVector: [
-    {
-      x: 0,
-      y: 0
-    }
-  ]
-};
+var currentPlayer;
 
 /**
  * Setups up the games initial state based on the configuration found in the main file.
@@ -69,8 +31,13 @@ function setup() {
   canvas.height = 480;
   
   currentBoard = new board(PATH_BOARD + "Room0.brd.json");
-  player.x = currentBoard.startingPositionX;
-  player.y = currentBoard.startingPositionY;
+  
+  // Setup the Player.
+  currentPlayer = new player("");
+  currentPlayer.graphics.active = currentPlayer.graphics.south;
+  currentPlayer.x = currentBoard.startingPositionX;
+  currentPlayer.y = currentBoard.startingPositionY;
+  
   screen = new screenRenderer(currentBoard);
 
   // Game input settings.
@@ -82,13 +49,14 @@ function setup() {
   canvas.addEventListener("touchmove", onTouchMove, false);
 
   // Run the startup program before the game logic loop.
-  var fileref = document.createElement("script");
-  fileref.setAttribute("type", "text/javascript");
-  fileref.setAttribute("src", "../game/TheWizardsTower-JS/Prg/INTRO.js");
-
-  if (typeof fileref !== "undefined") {
-    document.getElementsByTagName("head")[0].appendChild(fileref);
-  }
+//  var fileref = document.createElement("script");
+//  fileref.setAttribute("type", "text/javascript");
+//  fileref.setAttribute("src", "../game/TheWizardsTower-JS/Prg/INTRO.js");
+//
+//  if (typeof fileref !== "undefined") {
+//    document.getElementsByTagName("head")[0].appendChild(fileref);
+//  }
+  start();
 }
 
 function start() {
@@ -146,36 +114,24 @@ function update(step) {
   /*
    * Step 1: Process player input.
    */
-  // TODO: base displacement off values configured in the main file. Will also have to consider
-  // the players actual location in the game not just on the screen.
-  if (player.input.up) {
-    player.y -= 1;
+  if (currentPlayer.input.up) {
+    currentPlayer.move(currentPlayer.DirectionEnum.NORTH, step);
     updated = true;
-  } else if (player.input.down) {
-    player.y += 1;
+  } else if (currentPlayer.input.down) {
+    currentPlayer.move(currentPlayer.DirectionEnum.SOUTH, step);
     updated = true;
-  } else if (player.input.left) {
-    player.x -= 1;
+  } else if (currentPlayer.input.right) {
+    currentPlayer.move(currentPlayer.DirectionEnum.EAST, step);
     updated = true;
-  } else if (player.input.right) {
-    player.x += 1;
+  } else if (currentPlayer.input.left) {
+    currentPlayer.move(currentPlayer.DirectionEnum.WEST, step);
     updated = true;
   }
   
-  // temp rubbish 
-  if (updated) {
-    player.graphics.elapsed += step;
-    
-    if (player.graphics.elapsed >= player.graphics.south.frameRate) {
-      player.graphics.elapsed = player.graphics.elapsed - player.graphics.south.frameRate;
-      var frame = player.graphics.frameIndex + 1;
-      if (frame < player.graphics.south.frames.length) {
-        player.graphics.frameIndex = frame;
-      } else {
-        player.graphics.frameIndex = 0;
-      }
-    }
-  }
+  /*
+   * Step 2: Check for collision.
+   */
+  // TODO
   
   return updated;
 }
