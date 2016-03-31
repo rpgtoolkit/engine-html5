@@ -67,24 +67,24 @@ screenRenderer.prototype.render = function (cnv) {
      * Step 4: Render the player above everything on this layer.
      */
     // TODO: if the player is on this layer render them now.
-    if (currentPlayer.layer === i) {
-      var frame = currentPlayer.graphics.active.frames[currentPlayer.graphics.frameIndex];
+    if (currentPlayer.player.layer === i) {
+      var frame = currentPlayer.player.graphics.active.frames[currentPlayer.player.graphics.frameIndex];
       context.drawImage(
               frame,
               currentPlayer.x - (frame.width / 2),
               currentPlayer.y - (frame.height / 2),
-              currentPlayer.graphics.active.animationWidth,
-              currentPlayer.graphics.active.animationHeight);
+              currentPlayer.player.graphics.active.animationWidth,
+              currentPlayer.player.graphics.active.animationHeight);
 
       // Draw player collision rectangle.
       context.beginPath();
       context.lineWidth="2";
       context.strokeStyle="#FFFFFF";
       context.rect(
-              currentPlayer.x - (currentPlayer.boundingBox.width / 2),
-              currentPlayer.y + (currentPlayer.boundingBox.height),
-              currentPlayer.boundingBox.width,
-              currentPlayer.boundingBox.height);
+              currentPlayer.x + currentPlayer.player.graphics.active.boundingBox.x,
+              currentPlayer.y + currentPlayer.player.graphics.active.boundingBox.y,
+              currentPlayer.player.graphics.active.boundingBox.width,
+              currentPlayer.player.graphics.active.boundingBox.height);
       context.stroke();
     }
   }

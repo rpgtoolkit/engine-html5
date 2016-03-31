@@ -41,7 +41,13 @@ function player(filename) {
       ],
       animationHeight: 57,
       soundEffect: "",
-      animationWidth: 39
+      animationWidth: 39,
+      boundingBox: {
+        x: -20,
+        y: 10,
+        width: 40,
+        height: 15
+      }
     },
     south: {
       frameRate: 0.2,
@@ -51,7 +57,13 @@ function player(filename) {
       ],
       animationHeight: 57,
       soundEffect: "",
-      animationWidth: 39
+      animationWidth: 39,
+      boundingBox: {
+        x: -20,
+        y: 10,
+        width: 40,
+        height: 15
+      }
     },
     east: {
       frameRate: 0.2,
@@ -61,7 +73,13 @@ function player(filename) {
       ],
       animationHeight: 57,
       soundEffect: "",
-      animationWidth: 39
+      animationWidth: 39,
+      boundingBox: {
+        x: -20,
+        y: 10,
+        width: 40,
+        height: 15
+      }
     },
     west: {
       frameRate: 0.2,
@@ -71,7 +89,13 @@ function player(filename) {
       ],
       animationHeight: 57,
       soundEffect: "",
-      animationWidth: 39
+      animationWidth: 39,
+      boundingBox: {
+        x: -20,
+        y: 10,
+        width: 40,
+        height: 15
+      }
     }
   };
   this.boundingBox = {
@@ -87,38 +111,20 @@ player.prototype.DirectionEnum = {
   WEST: 3
 };
 
-player.prototype.move = function (direction, step) {
-  if (this.direction !== direction) {
-    this.direction = direction;
-    this.changeGraphics(direction);
-  } else {
-    this.graphics.elapsed += step;
+player.prototype.animate = function (step) {
+  this.graphics.elapsed += step;
 
-    if (this.graphics.elapsed >= this.graphics.active.frameRate) {
-      this.graphics.elapsed = this.graphics.elapsed - this.graphics.active.frameRate;
-      var frame = this.graphics.frameIndex + 1;
-      if (frame < this.graphics.active.frames.length) {
-        this.graphics.frameIndex = frame;
-      } else {
-        this.graphics.frameIndex = 0;
-      }
+  if (this.graphics.elapsed >= this.graphics.active.frameRate) {
+    this.graphics.elapsed = this.graphics.elapsed - this.graphics.active.frameRate;
+    var frame = this.graphics.frameIndex + 1;
+    if (frame < this.graphics.active.frames.length) {
+      this.graphics.frameIndex = frame;
+    } else {
+      this.graphics.frameIndex = 0;
     }
   }
-
-  switch (direction) {
-    case this.DirectionEnum.NORTH:
-      this.y -= 1;
-      break;
-    case this.DirectionEnum.SOUTH:
-      this.y += 1;
-      break;
-    case this.DirectionEnum.EAST:
-      this.x += 1;
-      break;
-    case this.DirectionEnum.WEST:
-      this.x -= 1;
-      break;
-  }
+  
+  screen.render(canvas);
 };
 
 player.prototype.changeGraphics = function (direction) {
@@ -141,4 +147,16 @@ player.prototype.changeGraphics = function (direction) {
   }
 };
 
-
+player.prototype.checkCollisions = function (entity, from) { 
+  var result = entity.hit("solid-" + this.layer);
+  if (result) {
+    switch (from.axis) {
+      case "x":
+        entity.x = from.oldValue;
+        break;
+      case "y":
+        entity.y = from.oldValue;
+        break;
+    }
+  }
+}

@@ -1,18 +1,4 @@
-/*
- * The basis for the logic in this file came from:
- *  http://codeincomplete.com/posts/2013/12/4/javascript_game_foundations_the_game_loop/ 
- */
- 
-if (showFPS) {
-  var fpsmeter = new FPSMeter();
-}
-
-var runGameLoop = false; // Must explictly start the game loop.
-
-var now;
-var dt = 0;
-var last = timestamp();
-var step = 1 / 60;
+var dt; // Craftyjs time step since last frame;
 
 var screen;
 var canvas = document.getElementById("canvas");
@@ -23,138 +9,149 @@ var currentPlayer;
 /**
  * Setups up the games initial state based on the configuration found in the main file.
  * 
+ * @param {type} filename
  * @returns {undefined}
  */
-function setup() {
+function setup(filename) {
+  Crafty.init(0, 0);
+  
   // Screen settings.
   canvas.width = 640;
   canvas.height = 480;
-  
+
   currentBoard = new board(PATH_BOARD + "Room0.brd.json");
-  
+  loadBoard(currentBoard);
+
   // Setup the Player.
-  currentPlayer = new player("");
-  currentPlayer.graphics.active = currentPlayer.graphics.south;
-  currentPlayer.x = currentBoard.startingPositionX;
-  currentPlayer.y = currentBoard.startingPositionY;
-  
+  var tkPlayer = new player("");
+  tkPlayer.graphics.active = tkPlayer.graphics.south;
+  tkPlayer.x = currentBoard.startingPositionX;
+  tkPlayer.y = currentBoard.startingPositionY;
+  loadPlayer(tkPlayer);
+
+  // Setup the drawing canvas (game screen).
   screen = new screenRenderer(currentBoard);
 
-  // Game input settings.
-  document.addEventListener("keydown", onKeyDown, false);
-  document.addEventListener("keyup", onKeyUp, false);
-  canvas.addEventListener("click", onClick, false);
-  canvas.addEventListener("mousemove", onMouseMove, false);
-  canvas.addEventListener("touchstart", onTouchStart, false);
-  canvas.addEventListener("touchmove", onTouchMove, false);
-
   // Run the startup program before the game logic loop.
-//  var fileref = document.createElement("script");
-//  fileref.setAttribute("type", "text/javascript");
-//  fileref.setAttribute("src", "../game/TheWizardsTower-JS/Prg/INTRO.js");
-//
-//  if (typeof fileref !== "undefined") {
-//    document.getElementsByTagName("head")[0].appendChild(fileref);
-//  }
-  start();
-}
+//  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
 
-function start() {
-  requestAnimationFrame(frame);
-  runGameLoop = true;
-}
-
-function stop() {
-  runGameLoop = false;
-}
-
-/**q
- * Processes a frame of game logic.
- * 
- * @returns {undefined}
- */
-function frame() {
-  var doRender = false;
-  
-  if (showFPS) {
-    fpsmeter.tickStart();
-  }
-
-  now = timestamp();
-  dt = dt + Math.min(1, (now - last) / 1000);
-  while (dt > step) {
-    dt = dt - step;
-    doRender = update(step);
-  }
-  
-  if (doRender) {
-    render(dt);
-  }
-  
-  last = now;
-  
-  if (runGameLoop) {
-    requestAnimationFrame(frame);
-  }
-
-  if (showFPS) {
-    fpsmeter.tick();
-  }
-}
-
-/**
- * Updates the state of the game engine.
- * 
- * @param {type} step time in milliseconds since last update.
- * @returns {undefined}
- */
-function update(step) {
-  var updated = false;
-  
-  /*
-   * Step 1: Process player input.
-   */
-  if (currentPlayer.input.up) {
-    currentPlayer.move(currentPlayer.DirectionEnum.NORTH, step);
-    updated = true;
-  } else if (currentPlayer.input.down) {
-    currentPlayer.move(currentPlayer.DirectionEnum.SOUTH, step);
-    updated = true;
-  } else if (currentPlayer.input.right) {
-    currentPlayer.move(currentPlayer.DirectionEnum.EAST, step);
-    updated = true;
-  } else if (currentPlayer.input.left) {
-    currentPlayer.move(currentPlayer.DirectionEnum.WEST, step);
-    updated = true;
-  }
-  
-  /*
-   * Step 2: Check for collision.
-   */
-  // TODO
-  
-  return updated;
-}
-
-/**
- * Renders the game screen.
- * 
- * @param {type} step
- * @returns {undefined}
- */
-function render(step) {
   screen.render(canvas);
 }
 
+function loadBoard(board) {
+  /*
+   * Setup vectors.
+   */
+  board.vectors.forEach(function (vector) {
+    var points = vector.points;
+    var len = points.length;
+    for (var i = 0; i < len - 1; i++) {
+      createVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
+    }
+
+    if (vector.isClosed) {
+      createVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
+    }
+  }, this);
+  
+  /*
+   * Setup programs.
+   */
+  
+  /*
+   * Setup player.
+   */
+  
+  /*
+   * Play background music.
+   */
+  if (board.backgroundMusic) {
+    var assets = {
+      "audio": {
+        "backgroundMusic": [PATH_MEDIA + board.backgroundMusic]
+      }
+    };
+    Crafty.load(assets, function() { playSound("backgroundMusic", -1); });
+  }
+}
+
+function loadPlayer(tkPlayer) {
+  currentPlayer = Crafty.e("2D, DOM, Fourway, Collision")
+          .attr({
+            x: tkPlayer.x,
+            y: tkPlayer.y,
+            w: 20,
+            h: 15,
+            player: tkPlayer})
+          .fourway(50)
+          .bind("Moved", function (from) {
+            this.player.animate(dt);
+            this.player.checkCollisions(this, from);
+          })
+          .bind("NewDirection", function (direction) {
+            if (direction.x === 0 && direction.y === -1) {
+              this.player.changeGraphics(this.player.DirectionEnum.NORTH);
+            } else if (direction.x === 0 && direction.y === 1) {
+              this.player.changeGraphics(this.player.DirectionEnum.SOUTH);
+            } else if (direction.x === -1 && direction.y === 0) {
+              this.player.changeGraphics(this.player.DirectionEnum.WEST);
+            } else if (direction.x === 1 && direction.y === 0) {
+              this.player.changeGraphics(this.player.DirectionEnum.EAST);
+            }
+          })
+          .bind("EnterFrame", function (event) {
+            dt = event.dt / 1000;
+          });
+}
+
+function runProgram(filename) {
+  var fileref = document.createElement("script");
+  fileref.setAttribute("type", "text/javascript");
+  fileref.setAttribute("src", filename);
+
+  if (typeof fileref !== "undefined") {
+    document.getElementsByTagName("head")[0].appendChild(fileref);
+  }
+}
+
+function createVector(x1, y1, x2, y2, layer) {
+  var xDiff = x2 - x1;
+  var yDiff = y2 - y1;
+
+  var distance = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+
+  var width;
+  var height;
+
+  if (x1 !== x2) {
+    width = distance;
+    height = 2;
+
+    if (xDiff < 0) {
+      x1 = x2;
+    }
+  } else {
+    width = 2;
+    height = distance;
+
+    if (yDiff < 0) {
+      y1 = y2;
+    }
+  }
+
+  Crafty.e("solid-" + layer + ", Collision")
+          .attr({x: x1, y: y1, w: width, h: height});
+}
+
+function playSound(sound, loop) {
+  Crafty.audio.play(sound, loop);
+}
+
 /**
+ * Utility function for getting accurate timestamps across browsers.
  * 
  * @returns {Number}
  */
 function timestamp() {
   return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 }
-
-/*
- * Main entry point for the game.
- */
-setup();
