@@ -76,14 +76,15 @@ function loadBoard(board) {
 }
 
 function loadPlayer(tkPlayer) {
-  currentPlayer = Crafty.e("2D, DOM, Fourway, Collision")
+  currentPlayer = Crafty.e("DOM, Fourway, Collision")
           .attr({
             x: tkPlayer.x,
             y: tkPlayer.y,
-            w: 20,
-            h: 15,
             player: tkPlayer})
           .fourway(50)
+          .collision(
+                  new Crafty.polygon([-20, 10, 20, 10, 20, 25, -20, 25])
+                  )
           .bind("Moved", function (from) {
             this.player.animate(dt);
             this.player.checkCollisions(this, from);

@@ -75,8 +75,8 @@ function player(filename) {
       soundEffect: "",
       animationWidth: 39,
       boundingBox: {
-        x: -20,
-        y: 10,
+        x: 0,
+        y: 0,
         width: 40,
         height: 15
       }
@@ -91,16 +91,12 @@ function player(filename) {
       soundEffect: "",
       animationWidth: 39,
       boundingBox: {
-        x: -20,
-        y: 10,
+        x: 0,
+        y: 0,
         width: 40,
         height: 15
       }
     }
-  };
-  this.boundingBox = {
-    width: 40,
-    height: 10
   };
 }
 

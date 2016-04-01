@@ -1,10 +1,9 @@
 function screenRenderer(board) {
   this.board = board;
-  this.tilesets = {};
 }
 
 screenRenderer.prototype.render = function (cnv) {
-  var cnv = cnv || document.createElement("canvas");
+  var cnv = cnv;
 
   cnv.width = this.board.width * 32;
   cnv.height = this.board.height * 32;
@@ -14,6 +13,10 @@ screenRenderer.prototype.render = function (cnv) {
   // Draw a black background.  
   context.fillStyle = "#000000";
   context.fillRect(0, 0, cnv.width, cnv.height);
+  
+  if (!this.board.layerCache.length) {
+    this.board.generateLayerCache();
+  }
 
   var layer, row, tile, source, data, renderer;
 
@@ -22,36 +25,9 @@ screenRenderer.prototype.render = function (cnv) {
     layer = this.board.tiles[i];
 
     /*
-     * Step 1: Render this layer's tiles. 
+     * Step 1: Render this layer. 
      */
-    // y axis
-    for (var y = 0; y < layer.length; y++) {
-      row = layer[y];
-
-      // x axis
-      for (var x = 0; x < row.length; x++) {
-        tile = row[x] - 1;
-
-        if (tile > -1) {
-          source = this.board.tileNames[tile];
-
-          if (source) {
-            // extract data (filename and index)
-            data = this.getTileData(source);
-
-            // load tileset
-            if (this.tilesets[data.tileset] === undefined) {
-              this.tilesets[data.tileset] = new tileset(PATH_TILESET + data.tileset);
-            }
-
-            renderer = new tilesetRenderer(this.tilesets[data.tileset]);
-
-            // render tile to board canvas
-            renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);
-          }
-        }
-      }
-    }
+    context.drawImage(this.board.layerCache[i], 0, 0);
 
     /*
      * Step 2: Render items.
@@ -81,8 +57,8 @@ screenRenderer.prototype.render = function (cnv) {
       context.lineWidth="2";
       context.strokeStyle="#FFFFFF";
       context.rect(
-              currentPlayer.x + currentPlayer.player.graphics.active.boundingBox.x,
-              currentPlayer.y + currentPlayer.player.graphics.active.boundingBox.y,
+              currentPlayer.x - 20,
+              currentPlayer.y + 10,
               currentPlayer.player.graphics.active.boundingBox.width,
               currentPlayer.player.graphics.active.boundingBox.height);
       context.stroke();
@@ -128,14 +104,4 @@ screenRenderer.prototype.render = function (cnv) {
     context.closePath();
     context.stroke();
   }, this);
-
-  return cnv;
-};
-
-screenRenderer.prototype.getTileData = function (source) {
-  var splitPoint = source.indexOf(".tst") + 4;
-  return {
-    tileset: source.substring(0, splitPoint),
-    tile: source.substring(splitPoint)
-  };
 };
