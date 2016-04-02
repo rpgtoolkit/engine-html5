@@ -13,11 +13,8 @@ var currentPlayer;
  * @returns {undefined}
  */
 function setup(filename) {
-  Crafty.init(0, 0);
-  
-  // Screen settings.
-  canvas.width = 640;
-  canvas.height = 480;
+  Crafty.init(640, 480);
+  Crafty.viewport.init(640, 480);
 
   currentBoard = new board(PATH_BOARD + "Room0.brd.json");
   loadBoard(currentBoard);
@@ -28,14 +25,13 @@ function setup(filename) {
   tkPlayer.x = currentBoard.startingPositionX;
   tkPlayer.y = currentBoard.startingPositionY;
   loadPlayer(tkPlayer);
+  Crafty.viewport.follow(currentPlayer, 0, 0);
 
   // Setup the drawing canvas (game screen).
   screen = new screenRenderer(currentBoard);
 
   // Run the startup program before the game logic loop.
 //  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
-
-  screen.render(canvas);
 }
 
 function loadBoard(board) {
@@ -53,15 +49,15 @@ function loadBoard(board) {
       createVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
     }
   }, this);
-  
+
   /*
    * Setup programs.
    */
-  
+
   /*
    * Setup player.
    */
-  
+
   /*
    * Play background music.
    */
@@ -71,8 +67,28 @@ function loadBoard(board) {
         "backgroundMusic": [PATH_MEDIA + board.backgroundMusic]
       }
     };
-    Crafty.load(assets, function() { playSound("backgroundMusic", -1); });
+    Crafty.load(assets, function () {
+      playSound("backgroundMusic", -1);
+    });
   }
+
+  var width = currentBoard.width * 32;
+  var height = currentBoard.height * 32;
+
+  Crafty.c("Board", {
+    ready: true,
+    width: width,
+    height: height,
+    init: function () {
+      this.addComponent("2D, Canvas");
+      this.attr({x: 0, y: 0, w: width, h: height});
+      this.bind("Draw", function (e) {
+        screen.render(e.ctx);
+      });
+    }
+  });
+
+  Crafty.e("Board");
 }
 
 function loadPlayer(tkPlayer) {

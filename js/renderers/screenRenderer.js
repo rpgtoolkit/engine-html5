@@ -2,17 +2,10 @@ function screenRenderer(board) {
   this.board = board;
 }
 
-screenRenderer.prototype.render = function (cnv) {
-  var cnv = cnv;
-
-  cnv.width = this.board.width * 32;
-  cnv.height = this.board.height * 32;
-
-  var context = cnv.getContext("2d");
-
+screenRenderer.prototype.render = function (context) {
   // Draw a black background.  
   context.fillStyle = "#000000";
-  context.fillRect(0, 0, cnv.width, cnv.height);
+  context.fillRect(0, 0, currentBoard.width * 32, currentBoard.height * 32);
   
   if (!this.board.layerCache.length) {
     this.board.generateLayerCache();

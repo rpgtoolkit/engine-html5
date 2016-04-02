@@ -119,8 +119,6 @@ player.prototype.animate = function (step) {
       this.graphics.frameIndex = 0;
     }
   }
-  
-  screen.render(canvas);
 };
 
 player.prototype.changeGraphics = function (direction) {
@@ -155,4 +153,4 @@ player.prototype.checkCollisions = function (entity, from) {
         break;
     }
   }
-}
+};
