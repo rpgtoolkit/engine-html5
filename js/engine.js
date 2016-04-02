@@ -17,6 +17,9 @@ function setup(filename) {
   Crafty.canvasLayer.init();
   Crafty.viewport.init(640, 480);
   
+  // Setup the drawing canvas (game screen).
+  screen = new screenRenderer();
+  
   currentBoard = new board(PATH_BOARD + "Room0.brd.json");
   loadBoard(currentBoard);
 
@@ -120,6 +123,7 @@ function loadPlayer(tkPlayer) {
           .bind("EnterFrame", function (event) {
             dt = event.dt / 1000;
           });
+  currentPlayer.player.loadGraphics();
 }
 
 function runProgram(filename) {

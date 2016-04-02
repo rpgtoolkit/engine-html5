@@ -1,8 +1,10 @@
-function screenRenderer(board) {
-  this.board = board;
+function screenRenderer() {
+  
 }
 
 screenRenderer.prototype.render = function (context) {
+  this.board = currentBoard;
+  
   // Draw a black background.  
   context.fillStyle = "#000000";
   context.fillRect(0, 0, currentBoard.width * 32, currentBoard.height * 32);
@@ -37,7 +39,7 @@ screenRenderer.prototype.render = function (context) {
      */
     // TODO: if the player is on this layer render them now.
     if (currentPlayer.player.layer === i && currentPlayer.player.renderReady) {
-      var frame = currentPlayer.player.graphics.active.frames[currentPlayer.player.graphics.frameIndex];
+      var frame = Crafty.assets[currentPlayer.player.graphics.active.frames[currentPlayer.player.graphics.frameIndex]];
       context.drawImage(
               frame,
               currentPlayer.x - (frame.width / 2),
