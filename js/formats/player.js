@@ -116,16 +116,16 @@ player.prototype.changeGraphics = function (direction) {
   }
 };
 
-player.prototype.checkCollisions = function (entity, from) {
-  var result = entity.hit("solid-" + this.layer);
-  if (result) {
-    switch (from.axis) {
-      case "x":
-        entity.x = from.oldValue;
-        break;
-      case "y":
-        entity.y = from.oldValue;
-        break;
-    }
+player.prototype.checkCollisions = function (collision, entity) {
+  var object = collision.obj;
+  switch(object.vectorType) {
+    case "solid":
+      entity.x += collision.normal.x;
+      entity.y += collision.normal.y;
+      entity.resetHitChecks();
+      break;
+    case "program":
+      rpgtoolkit.runProgram(object.fileName);
+      break;
   }
 };

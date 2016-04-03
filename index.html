@@ -7,11 +7,13 @@
       var PATH_BOARD = PATH_PROJECT + "Boards/";
       var PATH_CHARACTER = PATH_PROJECT + "Chrs/";
       var PATH_MEDIA = PATH_PROJECT + "Media/";
+      var PATH_PROGRAM = PATH_PROJECT + "Prg/";
       var PATH_TILESET = PATH_PROJECT + "Tiles/";
     </script>
     
     <!-- TODO Replace with minified version when production ready. -->
     <script src ="js/lib/crafty0.7.1.js"></script>
+    <script src ="js/lib/jailed.js"></script>
 
     <!-- I/O Libraries -->
     <script src="js/io/binaryIO.js"></script>
@@ -20,7 +22,6 @@
     <script src="js/formats/tileset.js"></script>
     <script src="js/renderers/screenRenderer.js"></script>
     <script src="js/renderers/tilesetRenderer.js"></script>
-    
   </head>
   <body>
     <!-- Import the engine game logic. -->
@@ -28,9 +29,9 @@
     
     <!-- TODO: Supply main file here. -->
     <script type="text/javascript">
-       window.onload = function () {
+//       window.onload = function () { Jailed doesn't work with this :(
         rpgtoolkit.setup("");
-       };
+//       };
     </script>
   </body>
 </html>

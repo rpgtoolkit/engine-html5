@@ -7,7 +7,6 @@ function board(filename) {
 
   var board = JSON.parse(req.responseText);
   board.tiles = [];
-  board.tilesets = {};
   board.layerCache = [];
 
   var skipTiles = 0, tileIndex = 0;
@@ -84,11 +83,11 @@ board.prototype.generateLayerCache = function () {
             data = this.getTileData(source);
 
             // load tileset
-            if (this.tilesets[data.tileset] === undefined) {
-              this.tilesets[data.tileset] = new tileset(PATH_TILESET + data.tileset);
+            if (rpgtoolkit.tilesets[data.tileset] === undefined) {
+              rpgtoolkit.tilesets[data.tileset] = new tileset(PATH_TILESET + data.tileset);
             }
 
-            renderer = new tilesetRenderer(this.tilesets[data.tileset]);
+            renderer = new tilesetRenderer(rpgtoolkit.tilesets[data.tileset]);
 
             // render tile to board canvas
             renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);

@@ -4,6 +4,9 @@ function RPGToolkit() {
   this.dt = 0; // Craftyjs time step since last frame;
   this.screen = {};
   this.craftyBoard = {};
+  this.craftyPlayer = {};
+  this.tilesets = {};
+  this.sandbox = document.getElementById("sandbox");
 }
 
 /**
@@ -12,14 +15,14 @@ function RPGToolkit() {
  * @param {type} filename
  * @returns {undefined}
  */
-RPGToolkit.prototype.setup = function(filename) {
+RPGToolkit.prototype.setup = function (filename) {
   Crafty.init(640, 480);
   Crafty.canvasLayer.init();
   Crafty.viewport.init(640, 480);
-  
+
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
-  
+
   this.craftyBoard = new board(PATH_BOARD + "Room0.brd.json");
   this.loadBoard(this.craftyBoard);
 
@@ -34,7 +37,7 @@ RPGToolkit.prototype.setup = function(filename) {
 //  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
 };
 
-RPGToolkit.prototype.loadBoard = function(board) {
+RPGToolkit.prototype.loadBoard = function (board) {
   /*
    * Setup vectors.
    */
@@ -42,17 +45,30 @@ RPGToolkit.prototype.loadBoard = function(board) {
     var points = vector.points;
     var len = points.length;
     for (var i = 0; i < len - 1; i++) {
-      this.createVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
+      this.createSolidVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
     }
 
     if (vector.isClosed) {
-      this.createVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
+      this.createSolidVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
     }
   }, this);
 
   /*
    * Setup programs.
    */
+  board.programs.forEach(function (program) {
+    var points = program.points;
+    var len = points.length;
+    for (var i = 0; i < len - 1; i++) {
+      this.createProgramVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y,
+              program.layer, PATH_PROGRAM.concat(program.fileName));
+    }
+
+    if (program.isClosed) {
+      this.createProgramVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y,
+              program.layer, PATH_PROGRAM.concat(program.fileName));
+    }
+  }, this);
 
   /*
    * Setup player.
@@ -92,19 +108,24 @@ RPGToolkit.prototype.loadBoard = function(board) {
   Crafty.e("Board");
 };
 
-RPGToolkit.prototype.loadPlayer = function(tkPlayer) {
+RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
   this.craftyPlayer = Crafty.e("DOM, Fourway, Collision")
           .attr({
             x: tkPlayer.x,
             y: tkPlayer.y,
             player: tkPlayer})
           .fourway(50)
-          .collision(
-                  new Crafty.polygon([-20, 10, 20, 10, 20, 25, -20, 25])
-                  )
+          .collision(new Crafty.polygon([-20, 10, 20, 10, 20, 25, -20, 25]))
+          .checkHits("Solid")
+          .bind("HitOn", function (hitData) {
+            this.player.checkCollisions(hitData[0], this);
+          })
+          .bind("HitOff", function (comp) {
+            Crafty.log(comp);
+            Crafty.log("Collision with Solid entity ended.");
+          })
           .bind("Moved", function (from) {
             this.player.animate(this.dt);
-            this.player.checkCollisions(this, from);
           })
           .bind("NewDirection", function (direction) {
             if (direction.x === 0 && direction.y === -1) {
@@ -123,17 +144,52 @@ RPGToolkit.prototype.loadPlayer = function(tkPlayer) {
   this.craftyPlayer.player.loadGraphics();
 };
 
-RPGToolkit.prototype.runProgram = function(filename) {
-  var fileref = document.createElement("script");
-  fileref.setAttribute("type", "text/javascript");
-  fileref.setAttribute("src", filename);
+RPGToolkit.prototype.runProgram = function (filename) {
+  // Provide the full path for Jailed.
+  var host = location.protocol
+          .concat("//")
+          .concat(window.location.hostname)
+          .concat(":".concat(location.port));
+  
+  // Will provide an API similar to the original RPGCode one.
+  var api = {
+    log: helloworld
+  };
 
-  if (typeof fileref !== "undefined") {
-    document.getElementsByTagName("head")[0].appendChild(fileref);
-  }
+  var program = new jailed.Plugin(host + "/" + filename, api);
+  program.whenConnected(function() {
+    // TODO: Pause the Crafty loop here.
+  });
+  program.whenDisconnected(function () {
+    // TODO: Restart the Crafty loop here.
+    console.log("program finished.");
+  });
 };
 
-RPGToolkit.prototype.createVector = function(x1, y1, x2, y2, layer) {
+function helloworld(message) {
+  console.log(message);
+}
+
+RPGToolkit.prototype.createSolidVector = function (x1, y1, x2, y2, layer) {
+  var attr = this.calculateVectorPosition(x1, y1, x2, y2);
+  attr.layer = layer;
+  attr.vectorType = "solid";
+
+  Crafty.e("Solid, Collision")
+          .attr(attr);
+};
+
+RPGToolkit.prototype.createProgramVector = function (x1, y1, x2, y2, layer, fileName) {
+  var attr = this.calculateVectorPosition(x1, y1, x2, y2);
+  attr.layer = layer;
+  attr.vectorType = "program";
+  attr.fileName = fileName;
+
+  Crafty.e("Solid, Collision")
+          .attr(attr);
+};
+
+RPGToolkit.prototype.calculateVectorPosition = function (x1, y1, x2, y2) {
   var xDiff = x2 - x1;
   var yDiff = y2 - y1;
 
@@ -158,11 +214,10 @@ RPGToolkit.prototype.createVector = function(x1, y1, x2, y2, layer) {
     }
   }
 
-  Crafty.e("solid-" + layer + ", Collision")
-          .attr({x: x1, y: y1, w: width, h: height});
+  return {x: x1, y: y1, w: width, h: height};
 };
 
-RPGToolkit.prototype.playSound = function(sound, loop) {
+RPGToolkit.prototype.playSound = function (sound, loop) {
   Crafty.audio.play(sound, loop);
 };
 
@@ -171,13 +226,13 @@ RPGToolkit.prototype.playSound = function(sound, loop) {
  * 
  * @returns {Number}
  */
-RPGToolkit.prototype.timestamp = function() {
+RPGToolkit.prototype.timestamp = function () {
   return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 };
 
 // TODO: Make this a utility function. When there is a Craftyjs compiler
 // it will do it instead.
-RPGToolkit.prototype.prependPath = function(prepend, items) {
+RPGToolkit.prototype.prependPath = function (prepend, items) {
   var len = items.length;
   for (var i = 0; i < len; i++) {
     items[i] = prepend.concat(items[i]);
