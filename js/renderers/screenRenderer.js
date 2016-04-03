@@ -3,11 +3,11 @@ function screenRenderer() {
 }
 
 screenRenderer.prototype.render = function (context) {
-  this.board = currentBoard;
+  this.board = rpgtoolkit.craftyBoard;
   
   // Draw a black background.  
   context.fillStyle = "#000000";
-  context.fillRect(0, 0, currentBoard.width * 32, currentBoard.height * 32);
+  context.fillRect(0, 0, rpgtoolkit.craftyBoard.width * 32, rpgtoolkit.craftyBoard.height * 32);
   
   if (!this.board.layerCache.length) {
     this.board.generateLayerCache();
@@ -37,25 +37,25 @@ screenRenderer.prototype.render = function (context) {
     /*
      * Step 4: Render the player above everything on this layer.
      */
-    // TODO: if the player is on this layer render them now.
-    if (currentPlayer.player.layer === i && currentPlayer.player.renderReady) {
-      var frame = Crafty.assets[currentPlayer.player.graphics.active.frames[currentPlayer.player.graphics.frameIndex]];
+    var player = rpgtoolkit.craftyPlayer.player;
+    if (player.layer === i && player.renderReady) {
+      var frame = Crafty.assets[player.graphics.active.frames[player.graphics.frameIndex]];
       context.drawImage(
               frame,
-              currentPlayer.x - (frame.width / 2),
-              currentPlayer.y - (frame.height / 2),
-              currentPlayer.player.graphics.active.animationWidth,
-              currentPlayer.player.graphics.active.animationHeight);
+              rpgtoolkit.craftyPlayer.x - (frame.width / 2),
+              rpgtoolkit.craftyPlayer.y - (frame.height / 2),
+              player.graphics.active.animationWidth,
+              player.graphics.active.animationHeight);
 
       // Draw player collision rectangle.
       context.beginPath();
       context.lineWidth="2";
       context.strokeStyle="#FFFFFF";
       context.rect(
-              currentPlayer.x - 20,
-              currentPlayer.y + 10,
-              currentPlayer.player.graphics.active.boundingBox.width,
-              currentPlayer.player.graphics.active.boundingBox.height);
+              rpgtoolkit.craftyPlayer.x - 20,
+              rpgtoolkit.craftyPlayer.y + 10,
+              player.graphics.active.boundingBox.width,
+              player.graphics.active.boundingBox.height);
       context.stroke();
     }
   }

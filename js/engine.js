@@ -1,10 +1,10 @@
-var dt; // Craftyjs time step since last frame;
+var rpgtoolkit = new RPGToolkit();
 
-var screen;
-var canvas = document.getElementById("canvas");
-
-var currentBoard;
-var currentPlayer;
+function RPGToolkit() {
+  this.dt = 0; // Craftyjs time step since last frame;
+  this.screen = {};
+  this.craftyBoard = {};
+}
 
 /**
  * Setups up the games initial state based on the configuration found in the main file.
@@ -12,32 +12,29 @@ var currentPlayer;
  * @param {type} filename
  * @returns {undefined}
  */
-function setup(filename) {
+RPGToolkit.prototype.setup = function(filename) {
   Crafty.init(640, 480);
   Crafty.canvasLayer.init();
   Crafty.viewport.init(640, 480);
   
   // Setup the drawing canvas (game screen).
-  screen = new screenRenderer();
+  this.screen = new screenRenderer();
   
-  currentBoard = new board(PATH_BOARD + "Room0.brd.json");
-  loadBoard(currentBoard);
+  this.craftyBoard = new board(PATH_BOARD + "Room0.brd.json");
+  this.loadBoard(this.craftyBoard);
 
   // Setup the Player.
   var tkPlayer = new player(PATH_CHARACTER + "Hero.tem.json");
-  tkPlayer.x = currentBoard.startingPositionX;
-  tkPlayer.y = currentBoard.startingPositionY;
-  loadPlayer(tkPlayer);
-  Crafty.viewport.follow(currentPlayer, 0, 0);
-
-  // Setup the drawing canvas (game screen).
-  screen = new screenRenderer(currentBoard);
+  tkPlayer.x = this.craftyBoard.startingPositionX;
+  tkPlayer.y = this.craftyBoard.startingPositionY;
+  this.loadPlayer(tkPlayer);
+  Crafty.viewport.follow(this.craftyPlayer, 0, 0);
 
   // Run the startup program before the game logic loop.
 //  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
-}
+};
 
-function loadBoard(board) {
+RPGToolkit.prototype.loadBoard = function(board) {
   /*
    * Setup vectors.
    */
@@ -45,11 +42,11 @@ function loadBoard(board) {
     var points = vector.points;
     var len = points.length;
     for (var i = 0; i < len - 1; i++) {
-      createVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
+      this.createVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
     }
 
     if (vector.isClosed) {
-      createVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
+      this.createVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
     }
   }, this);
 
@@ -72,12 +69,12 @@ function loadBoard(board) {
       }
     };
     Crafty.load(assets, function () {
-      playSound("backgroundMusic", -1);
+      rpgtoolkit.playSound("backgroundMusic", -1);
     });
   }
 
-  var width = currentBoard.width * 32;
-  var height = currentBoard.height * 32;
+  var width = this.craftyBoard.width * 32;
+  var height = this.craftyBoard.height * 32;
 
   Crafty.c("Board", {
     ready: true,
@@ -87,16 +84,16 @@ function loadBoard(board) {
       this.addComponent("2D, Canvas");
       this.attr({x: 0, y: 0, w: width, h: height});
       this.bind("Draw", function (e) {
-        screen.render(e.ctx);
+        rpgtoolkit.screen.render(e.ctx);
       });
     }
   });
 
   Crafty.e("Board");
-}
+};
 
-function loadPlayer(tkPlayer) {
-  currentPlayer = Crafty.e("DOM, Fourway, Collision")
+RPGToolkit.prototype.loadPlayer = function(tkPlayer) {
+  this.craftyPlayer = Crafty.e("DOM, Fourway, Collision")
           .attr({
             x: tkPlayer.x,
             y: tkPlayer.y,
@@ -106,7 +103,7 @@ function loadPlayer(tkPlayer) {
                   new Crafty.polygon([-20, 10, 20, 10, 20, 25, -20, 25])
                   )
           .bind("Moved", function (from) {
-            this.player.animate(dt);
+            this.player.animate(this.dt);
             this.player.checkCollisions(this, from);
           })
           .bind("NewDirection", function (direction) {
@@ -121,12 +118,12 @@ function loadPlayer(tkPlayer) {
             }
           })
           .bind("EnterFrame", function (event) {
-            dt = event.dt / 1000;
+            this.dt = event.dt / 1000;
           });
-  currentPlayer.player.loadGraphics();
-}
+  this.craftyPlayer.player.loadGraphics();
+};
 
-function runProgram(filename) {
+RPGToolkit.prototype.runProgram = function(filename) {
   var fileref = document.createElement("script");
   fileref.setAttribute("type", "text/javascript");
   fileref.setAttribute("src", filename);
@@ -134,9 +131,9 @@ function runProgram(filename) {
   if (typeof fileref !== "undefined") {
     document.getElementsByTagName("head")[0].appendChild(fileref);
   }
-}
+};
 
-function createVector(x1, y1, x2, y2, layer) {
+RPGToolkit.prototype.createVector = function(x1, y1, x2, y2, layer) {
   var xDiff = x2 - x1;
   var yDiff = y2 - y1;
 
@@ -163,17 +160,26 @@ function createVector(x1, y1, x2, y2, layer) {
 
   Crafty.e("solid-" + layer + ", Collision")
           .attr({x: x1, y: y1, w: width, h: height});
-}
+};
 
-function playSound(sound, loop) {
+RPGToolkit.prototype.playSound = function(sound, loop) {
   Crafty.audio.play(sound, loop);
-}
+};
 
 /**
  * Utility function for getting accurate timestamps across browsers.
  * 
  * @returns {Number}
  */
-function timestamp() {
+RPGToolkit.prototype.timestamp = function() {
   return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
-}
+};
+
+// TODO: Make this a utility function. When there is a Craftyjs compiler
+// it will do it instead.
+RPGToolkit.prototype.prependPath = function(prepend, items) {
+  var len = items.length;
+  for (var i = 0; i < len; i++) {
+    items[i] = prepend.concat(items[i]);
+  }
+};

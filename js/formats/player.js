@@ -32,10 +32,10 @@ player.prototype.DirectionEnum = {
 };
 
 player.prototype.loadGraphics = function () {
-  appendPath(this.graphics.north.frames);
-  appendPath(this.graphics.south.frames);
-  appendPath(this.graphics.east.frames);
-  appendPath(this.graphics.west.frames);
+  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.north.frames);
+  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.south.frames);
+  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.east.frames);
+  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.west.frames);
   
   var frames = [];
   frames = frames.concat(this.graphics.north.frames);
@@ -46,15 +46,6 @@ player.prototype.loadGraphics = function () {
   this.loadFrames(frames);
 };
 
-// TODO: Make this a utility function. When there is a Craftyjs compiler
-// it will do it instead.
-function appendPath(frames) {
-  var len = frames.length;
-  for (var i = 0; i < len; i++) {
-    frames[i] = PATH_BITMAP.concat(frames[i]);
-  }
-}
-
 player.prototype.loadFrames = function (frames) {
   var assets = {
     "images": frames
@@ -62,8 +53,9 @@ player.prototype.loadFrames = function (frames) {
 
   Crafty.load(assets,
           function () { // when loaded
-            currentPlayer.player.graphics.active = currentPlayer.player.graphics.south;
-            currentPlayer.player.renderReady = true;
+            var player = rpgtoolkit.craftyPlayer.player;
+            player.graphics.active = player.graphics.south;
+            player.renderReady = true;
             var e = {ctx: Crafty.canvasLayer.context};
             Crafty.trigger("Draw", e);
           },
@@ -76,13 +68,14 @@ player.prototype.loadFrames = function (frames) {
 };
 
 player.prototype.frameLoaded = function () {
-  // Forced to use currentPlayer in here because the object invoking 
+  // Forced to use craftyPlayer in here because the object invoking 
   // the callback isn't a player object!
-  currentPlayer.player.framesLoaded++;
+  var player = rpgtoolkit.craftyPlayer.player;
+  player.framesLoaded++;
 
-  if (currentPlayer.player.framesLoaded === currentPlayer.player.totalFrames) {
-    currentPlayer.player.graphics.active = currentPlayer.player.graphics.south;
-    currentPlayer.player.renderReady = true;
+  if (player.framesLoaded === player.totalFrames) {
+    player.graphics.active = player.graphics.south;
+    player.renderReady = true;
 
     var e = {ctx: Crafty.canvasLayer.context};
     Crafty.trigger("Draw", e);
