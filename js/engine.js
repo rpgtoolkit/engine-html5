@@ -7,6 +7,7 @@ function RPGToolkit() {
   this.craftyPlayer = {};
   this.tilesets = {};
   this.sandbox = document.getElementById("sandbox");
+  this.rpgcodeApi = {};
 }
 
 /**
@@ -32,6 +33,8 @@ RPGToolkit.prototype.setup = function (filename) {
   tkPlayer.y = this.craftyBoard.startingPositionY;
   this.loadPlayer(tkPlayer);
   Crafty.viewport.follow(this.craftyPlayer, 0, 0);
+  
+  this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
 //  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
@@ -78,15 +81,17 @@ RPGToolkit.prototype.loadBoard = function (board) {
   /*
    * Play background music.
    */
-  if (board.backgroundMusic) {
-    var assets = {
-      "audio": {
-        "backgroundMusic": [PATH_MEDIA + board.backgroundMusic]
-      }
-    };
-    Crafty.load(assets, function () {
-      rpgtoolkit.playSound("backgroundMusic", -1);
-    });
+  var backgroundMusic = board.backgroundMusic;
+  if (backgroundMusic) {
+    if (Crafty.asset(backgroundMusic)) {
+      Crafty.audio.player(backgroundMusic);
+    } else {
+      var assets = {"audio": {}};
+      assets.audio[board.backgroundMusic] = PATH_MEDIA + board.backgroundMusic;
+      Crafty.load(assets, function () {
+        rpgtoolkit.playSound(backgroundMusic, -1);
+      });
+    }
   }
 
   var width = this.craftyBoard.width * 32;
@@ -106,6 +111,22 @@ RPGToolkit.prototype.loadBoard = function (board) {
   });
 
   Crafty.e("Board");
+};
+
+RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
+  this.craftyPlayer.disableControl();
+
+  this.craftyBoard = {};
+  Crafty("Solid").destroy();
+  Crafty("Board").destroy();
+  Crafty.audio.stop();
+
+  this.craftyPlayer.x = tileX * 32;
+  this.craftyPlayer.y = tileY * 32;
+  this.craftyBoard = new board(PATH_BOARD + boardName);
+  this.loadBoard(this.craftyBoard);
+
+  this.craftyPlayer.enableControl();
 };
 
 RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
@@ -150,25 +171,15 @@ RPGToolkit.prototype.runProgram = function (filename) {
           .concat("//")
           .concat(window.location.hostname)
           .concat(":".concat(location.port));
-  
-  // Will provide an API similar to the original RPGCode one.
-  var api = {
-    log: helloworld
-  };
 
-  var program = new jailed.Plugin(host + "/" + filename, api);
-  program.whenConnected(function() {
-    // TODO: Pause the Crafty loop here.
+  var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
+  program.whenConnected(function () {
+    Crafty.pause(true);
   });
   program.whenDisconnected(function () {
-    // TODO: Restart the Crafty loop here.
-    console.log("program finished.");
+    Crafty.pause(false);
   });
 };
-
-function helloworld(message) {
-  console.log(message);
-}
 
 RPGToolkit.prototype.createSolidVector = function (x1, y1, x2, y2, layer) {
   var attr = this.calculateVectorPosition(x1, y1, x2, y2);

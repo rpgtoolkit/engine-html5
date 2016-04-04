@@ -1,5 +1,8 @@
 function screenRenderer() {
-  
+  this.renderNowCanvas = document.createElement("canvas");
+  this.renderNowCanvas.width = 640;
+  this.renderNowCanvas.height = 480;
+  this.isRenderNow = false;
 }
 
 screenRenderer.prototype.render = function (context) {
@@ -99,4 +102,13 @@ screenRenderer.prototype.render = function (context) {
     context.closePath();
     context.stroke();
   }, this);
+  
+  /*
+   * Step 7: renderNowCanvas
+   */
+  if (this.isRenderNow) {
+    var x = rpgtoolkit.craftyPlayer.x - Crafty.viewport.x;
+    var y = rpgtoolkit.craftyPlayer.y - Crafty.viewport.y;
+    context.drawImage(this.renderNowCanvas, x, y);
+  }
 };

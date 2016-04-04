@@ -12,8 +12,8 @@
     </script>
     
     <!-- TODO Replace with minified version when production ready. -->
-    <script src ="js/lib/crafty0.7.1.js"></script>
-    <script src ="js/lib/jailed.js"></script>
+    <script src="js/lib/crafty0.7.1.js"></script>
+    <script src="js/lib/jailed/jailed.js"></script>
 
     <!-- I/O Libraries -->
     <script src="js/io/binaryIO.js"></script>
@@ -22,6 +22,9 @@
     <script src="js/formats/tileset.js"></script>
     <script src="js/renderers/screenRenderer.js"></script>
     <script src="js/renderers/tilesetRenderer.js"></script>
+    
+    <!-- RPGCode API-->
+    <script src="js/rpgcode/rpgcode.js"></script>
   </head>
   <body>
     <!-- Import the engine game logic. -->
@@ -29,9 +32,7 @@
     
     <!-- TODO: Supply main file here. -->
     <script type="text/javascript">
-//       window.onload = function () { Jailed doesn't work with this :(
         rpgtoolkit.setup("");
-//       };
     </script>
   </body>
 </html>
