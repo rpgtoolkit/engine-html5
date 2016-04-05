@@ -20,6 +20,7 @@ RPGToolkit.prototype.setup = function (filename) {
   Crafty.init(640, 480);
   Crafty.canvasLayer.init();
   Crafty.viewport.init(640, 480);
+  Crafty.paths({ audio: PATH_MEDIA, images: PATH_BITMAP });
 
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
@@ -87,7 +88,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
       Crafty.audio.player(backgroundMusic);
     } else {
       var assets = {"audio": {}};
-      assets.audio[board.backgroundMusic] = PATH_MEDIA + board.backgroundMusic;
+      assets.audio[board.backgroundMusic] = board.backgroundMusic;
       Crafty.load(assets, function () {
         rpgtoolkit.playSound(backgroundMusic, -1);
       });
@@ -174,10 +175,10 @@ RPGToolkit.prototype.runProgram = function (filename) {
 
   var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
   program.whenConnected(function () {
-    Crafty.pause(true);
+    rpgtoolkit.craftyPlayer.disableControl();
   });
   program.whenDisconnected(function () {
-    Crafty.pause(false);
+    rpgtoolkit.craftyPlayer.enableControl();
   });
 };
 

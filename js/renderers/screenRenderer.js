@@ -6,11 +6,15 @@ function screenRenderer() {
 }
 
 screenRenderer.prototype.render = function (context) {
+  var x = -Crafty.viewport._x;
+  var y = -Crafty.viewport._y;
+  var width = Crafty.viewport._width;
+  var height = Crafty.viewport._height;
   this.board = rpgtoolkit.craftyBoard;
   
   // Draw a black background.  
   context.fillStyle = "#000000";
-  context.fillRect(0, 0, rpgtoolkit.craftyBoard.width * 32, rpgtoolkit.craftyBoard.height * 32);
+  context.fillRect(x, y, width, height);
   
   if (!this.board.layerCache.length) {
     this.board.generateLayerCache();
@@ -25,7 +29,7 @@ screenRenderer.prototype.render = function (context) {
     /*
      * Step 1: Render this layer. 
      */
-    context.drawImage(this.board.layerCache[i], 0, 0);
+    context.drawImage(this.board.layerCache[i], x, y, width, height, x, y, width, height);
 
     /*
      * Step 2: Render items.
@@ -42,7 +46,8 @@ screenRenderer.prototype.render = function (context) {
      */
     var player = rpgtoolkit.craftyPlayer.player;
     if (player.layer === i && player.renderReady) {
-      var frame = Crafty.assets[player.graphics.active.frames[player.graphics.frameIndex]];
+      var asset = Crafty.__paths.images + player.graphics.active.frames[player.graphics.frameIndex];
+      var frame = Crafty.assets[asset];
       context.drawImage(
               frame,
               rpgtoolkit.craftyPlayer.x - (frame.width / 2),
@@ -107,8 +112,6 @@ screenRenderer.prototype.render = function (context) {
    * Step 7: renderNowCanvas
    */
   if (this.isRenderNow) {
-    var x = rpgtoolkit.craftyPlayer.x - Crafty.viewport.x;
-    var y = rpgtoolkit.craftyPlayer.y - Crafty.viewport.y;
     context.drawImage(this.renderNowCanvas, x, y);
   }
 };

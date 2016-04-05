@@ -32,11 +32,6 @@ player.prototype.DirectionEnum = {
 };
 
 player.prototype.loadGraphics = function () {
-  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.north.frames);
-  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.south.frames);
-  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.east.frames);
-  rpgtoolkit.prependPath(PATH_BITMAP, this.graphics.west.frames);
-  
   var frames = [];
   frames = frames.concat(this.graphics.north.frames);
   frames = frames.concat(this.graphics.south.frames);
