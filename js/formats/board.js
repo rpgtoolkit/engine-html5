@@ -55,6 +55,7 @@ function board(filename) {
 
 board.prototype.generateLayerCache = function () {
   var cnvLayer, context, layer, row, tile, source, data, renderer;
+  this.layerCache = [];
 
   // Loop through layers.
   for (var i = 0; i < this.layerCount; i++) {

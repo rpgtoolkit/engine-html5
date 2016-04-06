@@ -17,28 +17,32 @@ function RPGToolkit() {
  * @returns {undefined}
  */
 RPGToolkit.prototype.setup = function (filename) {
-  Crafty.init(640, 480);
+  var configuration = new project(filename);
+
+  Crafty.init(configuration.resolutionWidth, configuration.resolutionHeight);
   Crafty.canvasLayer.init();
-  Crafty.viewport.init(640, 480);
-  Crafty.paths({ audio: PATH_MEDIA, images: PATH_BITMAP });
+  Crafty.viewport.init(configuration.resolutionWidth, configuration.resolutionHeight);
+  Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
 
-  this.craftyBoard = new board(PATH_BOARD + "Room0.brd.json");
+  this.craftyBoard = new board(PATH_BOARD + configuration.initBoard);
   this.loadBoard(this.craftyBoard);
 
   // Setup the Player.
-  var tkPlayer = new player(PATH_CHARACTER + "Hero.tem.json");
+  var tkPlayer = new player(PATH_CHARACTER + configuration.initChar);
   tkPlayer.x = this.craftyBoard.startingPositionX;
   tkPlayer.y = this.craftyBoard.startingPositionY;
   this.loadPlayer(tkPlayer);
   Crafty.viewport.follow(this.craftyPlayer, 0, 0);
-  
+
   this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
-//  runProgram("../game/TheWizardsTower-JS/Prg/INTRO.js");
+  if (configuration.startupPrg) {
+    this.runProgram(PATH_PROGRAM + configuration.startupPrg);
+  }
 };
 
 RPGToolkit.prototype.loadBoard = function (board) {

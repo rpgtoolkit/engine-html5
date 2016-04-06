@@ -1,8 +1,7 @@
 function screenRenderer() {
   this.renderNowCanvas = document.createElement("canvas");
-  this.renderNowCanvas.width = 640;
-  this.renderNowCanvas.height = 480;
-  this.isRenderNow = false;
+  this.renderNowCanvas.width = Crafty.viewport._width;
+  this.renderNowCanvas.height = Crafty.viewport._height;
 }
 
 screenRenderer.prototype.render = function (context) {
@@ -11,11 +10,11 @@ screenRenderer.prototype.render = function (context) {
   var width = Crafty.viewport._width;
   var height = Crafty.viewport._height;
   this.board = rpgtoolkit.craftyBoard;
-  
+
   // Draw a black background.  
   context.fillStyle = "#000000";
   context.fillRect(x, y, width, height);
-  
+
   if (!this.board.layerCache.length) {
     this.board.generateLayerCache();
   }
@@ -57,8 +56,8 @@ screenRenderer.prototype.render = function (context) {
 
       // Draw player collision rectangle.
       context.beginPath();
-      context.lineWidth="2";
-      context.strokeStyle="#FFFFFF";
+      context.lineWidth = "2";
+      context.strokeStyle = "#FFFFFF";
       context.rect(
               rpgtoolkit.craftyPlayer.x - 20,
               rpgtoolkit.craftyPlayer.y + 10,
@@ -107,11 +106,17 @@ screenRenderer.prototype.render = function (context) {
     context.closePath();
     context.stroke();
   }, this);
-  
+
   /*
-   * Step 7: renderNowCanvas
+   * Step 7: Render rpgcode canvases.
    */
-  if (this.isRenderNow) {
-    context.drawImage(this.renderNowCanvas, x, y);
+  var canvases = rpgtoolkit.rpgcodeApi.canvases;
+  for (var property in canvases) {
+    if (canvases.hasOwnProperty(property)) {
+      var element = canvases[property];
+      if (element.render) {
+        context.drawImage(element.canvas, x, y);
+      }
+    }
   }
 };
