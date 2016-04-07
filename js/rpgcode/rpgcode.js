@@ -1,11 +1,14 @@
 function rpgcode() {
   this.api = {
     clear: this.clear,
+    delay: this.delay,
     getGlobal: this.getGlobal,
+    getPlayerLocation: this.getPlayerLocation,
     getRenderNowCanvas: this.getRenderNowCanvas,
     loadAssets: this.loadAssets,
     log: this.log,
     pixelText: this.pixelText,
+    pushPlayer: this.pushPlayer,
     removeAssets: this.removeAssets,
     renderNow: this.renderNow,
     replaceTile: this.replaceTile,
@@ -34,8 +37,19 @@ rpgcode.prototype.clear = function (canvasId) {
   }
 };
 
+rpgcode.prototype.delay = function (ms, callback) {
+  Crafty.e("Delay").delay(callback, ms);
+};
+
 rpgcode.prototype.getGlobal = function (id, callback) {
   callback(rpgtoolkit.rpgcodeApi.globals[id]);
+};
+
+rpgcode.prototype.getPlayerLocation = function (callback) {
+  var instance = rpgtoolkit.craftyPlayer;
+  callback(instance.x / rpgtoolkit.tileSize,
+          instance.y / rpgtoolkit.tileSize,
+          instance.player.layer);
 };
 
 rpgcode.prototype.getRenderNowCanvas = function (callback) {
@@ -63,6 +77,49 @@ rpgcode.prototype.pixelText = function (x, y, text, canvasId) {
   }
 };
 
+rpgcode.prototype.pushPlayer = function (direction) {
+  // Naive, player could go through vectors with this.
+  var from = {x: rpgtoolkit.craftyPlayer.x, y: rpgtoolkit.craftyPlayer.y};
+  switch (direction) {
+    case "NORTH":
+      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "SOUTH":
+      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "EAST":
+      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "WEST":
+      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "NORTHEAST":
+      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize;
+      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "NORTHWEST":
+      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize;
+      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
+      Crafty.trigger("Moved", from);
+      break;
+    case "SOUTHEAST":
+      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize
+      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize
+      Crafty.trigger("Moved", from);
+      break;
+    case "SOUTHWEST":
+      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize
+      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize
+      Crafty.trigger("Moved", from);
+      break;
+  }
+};
+
 rpgcode.prototype.removeAssets = function (assets) {
   Crafty.removeAssets(assets);
 };
@@ -75,7 +132,7 @@ rpgcode.prototype.renderNow = function (canvasId) {
   }
 };
 
-rpgcode.prototype.replaceTile = function(tileX, tileY, layer, tileName) {
+rpgcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
   var index = rpgtoolkit.craftyBoard.tileNames.indexOf(tileName);
   if (index === -1) {
     index = rpgtoolkit.craftyBoard.tileNames.push(tileName);

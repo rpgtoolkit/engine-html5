@@ -8,6 +8,7 @@ function RPGToolkit() {
   this.tilesets = {};
   this.sandbox = document.getElementById("sandbox");
   this.rpgcodeApi = {};
+  this.tileSize = 32;
 }
 
 /**
@@ -99,8 +100,8 @@ RPGToolkit.prototype.loadBoard = function (board) {
     }
   }
 
-  var width = this.craftyBoard.width * 32;
-  var height = this.craftyBoard.height * 32;
+  var width = this.craftyBoard.width * this.tileSize;
+  var height = this.craftyBoard.height * this.tileSize;
 
   Crafty.c("Board", {
     ready: true,
@@ -126,8 +127,8 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
   Crafty("Board").destroy();
   Crafty.audio.stop();
 
-  this.craftyPlayer.x = tileX * 32;
-  this.craftyPlayer.y = tileY * 32;
+  this.craftyPlayer.x = tileX * this.tileSize;
+  this.craftyPlayer.y = tileY * this.tileSize;
   this.craftyBoard = new board(PATH_BOARD + boardName);
   this.loadBoard(this.craftyBoard);
 

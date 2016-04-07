@@ -60,8 +60,8 @@ board.prototype.generateLayerCache = function () {
   // Loop through layers.
   for (var i = 0; i < this.layerCount; i++) {
     cnvLayer = document.createElement("canvas");
-    cnvLayer.width = this.width * 32;
-    cnvLayer.height = this.height * 32;
+    cnvLayer.width = this.width * rpgtoolkit.tileSize;
+    cnvLayer.height = this.height * rpgtoolkit.tileSize;
     context = cnvLayer.getContext("2d");
     layer = this.tiles[i];
 
@@ -91,7 +91,7 @@ board.prototype.generateLayerCache = function () {
             renderer = new tilesetRenderer(rpgtoolkit.tilesets[data.tileset]);
 
             // render tile to board canvas
-            renderer.renderTile(context, data["tile"] - 1, x * 32, y * 32);
+            renderer.renderTile(context, data["tile"] - 1, x * rpgtoolkit.tileSize, y * rpgtoolkit.tileSize);
           }
         }
       }
