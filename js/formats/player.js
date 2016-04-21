@@ -114,13 +114,20 @@ player.prototype.changeGraphics = function (direction) {
 player.prototype.checkCollisions = function (collision, entity) {
   var object = collision.obj;
   switch(object.vectorType) {
-    case "solid":
+    case "item":
+      // TODO: need to examine the item, determine if it is a solid,
+      //       does it have a program attached etc.
       entity.x += collision.normal.x;
       entity.y += collision.normal.y;
       entity.resetHitChecks();
       break;
     case "program":
-      rpgtoolkit.runProgram(object.fileName);
+      rpgtoolkit.runProgram(object.fileName, entity);
+      break;
+    case "solid":
+      entity.x += collision.normal.x;
+      entity.y += collision.normal.y;
+      entity.resetHitChecks();
       break;
   }
 };

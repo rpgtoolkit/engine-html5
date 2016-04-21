@@ -42,7 +42,7 @@ RPGToolkit.prototype.setup = function (filename) {
 
   // Run the startup program before the game logic loop.
   if (configuration.startupPrg) {
-    this.runProgram(PATH_PROGRAM + configuration.startupPrg);
+    this.runProgram(PATH_PROGRAM + configuration.startupPrg, {});
   }
 };
 
@@ -80,9 +80,14 @@ RPGToolkit.prototype.loadBoard = function (board) {
   }, this);
 
   /*
-   * Setup player.
+   * Setup board sprites.
    */
-  // Set the player starting layer and position etc.
+  var len = board.sprites.length;
+  for(var i = 0; i < len; i++) {
+    var sprite = board.sprites[i];
+    sprite.item = new item(PATH_ITEM + sprite.fileName);
+    board.sprites[i] = this.loadSprite(sprite);
+  }
 
   /*
    * Play background music.
@@ -156,27 +161,50 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
           })
           .bind("NewDirection", function (direction) {
             if (direction.x === 0 && direction.y === -1) {
-              this.player.changeGraphics(this.player.DirectionEnum.NORTH);
+              this.player.direction = this.player.DirectionEnum.NORTH;
+              this.player.changeGraphics(this.player.direction);
             } else if (direction.x === 0 && direction.y === 1) {
+              this.player.direction = this.player.DirectionEnum.SOUTH;
               this.player.changeGraphics(this.player.DirectionEnum.SOUTH);
             } else if (direction.x === -1 && direction.y === 0) {
+              this.player.direction = this.player.DirectionEnum.WEST;
               this.player.changeGraphics(this.player.DirectionEnum.WEST);
             } else if (direction.x === 1 && direction.y === 0) {
+              this.player.direction = this.player.DirectionEnum.EAST;
               this.player.changeGraphics(this.player.DirectionEnum.EAST);
             }
           })
           .bind("EnterFrame", function (event) {
             this.dt = event.dt / 1000;
           });
+  this.craftyPlayer.visible = false;
   this.craftyPlayer.player.loadGraphics();
 };
 
-RPGToolkit.prototype.runProgram = function (filename) {
+RPGToolkit.prototype.loadSprite = function (sprite) {
+  // TODO: width and height of item must be contain the collision polygon.
+  var attr = {x: sprite.x , y: sprite.y, w: 32, h: 32, vectorType: "item", sprite: sprite};
+  var entity = Crafty.e("2D, Solid, Collision")
+          .attr(attr)
+          .checkHits("Solid")
+          .collision(new Crafty.polygon([0, 0, 32, 0, 32, 32, 0, 32]))
+          .bind("HitOn", function (hitData) {
+            this.x += hitData[0].normal.x;
+            this.y += hitData[0].normal.y;
+            this.resetHitChecks();
+          });
+  entity.visible = false;
+  return entity;
+};
+
+RPGToolkit.prototype.runProgram = function (filename, source) {
   // Provide the full path for Jailed.
   var host = location.protocol
           .concat("//")
           .concat(window.location.hostname)
           .concat(":".concat(location.port));
+  
+  this.rpgcodeApi.source = source; // What called this program.
 
   var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
   program.whenConnected(function () {

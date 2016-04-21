@@ -33,7 +33,9 @@ screenRenderer.prototype.render = function (context) {
     /*
      * Step 2: Render items.
      */
-    // TODO: render any items on this layer.
+    this.board.sprites.forEach(function (entity) {
+      context.fillRect(entity.x, entity.y, 32, 32);
+    });
 
     /*
      * Step 3: Render npcs.

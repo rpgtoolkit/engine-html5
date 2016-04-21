@@ -17,6 +17,7 @@ function rpgcode() {
     setGlobal: this.setGlobal,
     setImage: this.setImage
   };
+  this.source = {}; // The entity that trigger the program.
   this.canvases = {"renderNowCanvas": {
       canvas: rpgtoolkit.screen.renderNowCanvas,
       render: false
