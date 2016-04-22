@@ -47,10 +47,15 @@ tilesetRenderer.prototype.renderTile = function (context, tileIndex, offsetX, of
     // assign RBGA values for each pixel
     for (var y = 0; y < rpgtoolkit.tileSize; y++) {
       for (var x = 0; x < rpgtoolkit.tileSize; x++) {
-        pixels[pixelOffset] = tile[x][y][0];
-        pixels[pixelOffset + 1] = tile[x][y][1];
-        pixels[pixelOffset + 2] = tile[x][y][2];
-        pixels[pixelOffset + 3] = 255;
+        var rgba = {r: tile[x][y][0], g: tile[x][y][1], b: tile[x][y][2]};
+        
+        // Deal with the magenta in the tilesets.
+        rgba.a = rgba.r === 255 && rgba.g === 0 && rgba.b === 255 ? 0 : 255;
+        
+        pixels[pixelOffset] = rgba.r;
+        pixels[pixelOffset + 1] = rgba.g;
+        pixels[pixelOffset + 2] = rgba.b;
+        pixels[pixelOffset + 3] = rgba.a;
         pixelOffset += 4;
       }
     }

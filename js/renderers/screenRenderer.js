@@ -34,7 +34,7 @@ screenRenderer.prototype.render = function (context) {
      * Step 2: Render items.
      */
     this.board.sprites.forEach(function (entity) {
-      context.fillRect(entity.x, entity.y, 32, 32);
+      context.fillRect(entity.x, entity.y, entity.w, entity.h);
     });
 
     /*
@@ -61,7 +61,7 @@ screenRenderer.prototype.render = function (context) {
       context.lineWidth = "2";
       context.strokeStyle = "#FFFFFF";
       context.rect(
-              rpgtoolkit.craftyPlayer.x - 20,
+              rpgtoolkit.craftyPlayer.x - 15,
               rpgtoolkit.craftyPlayer.y + 10,
               player.graphics.active.boundingBox.width,
               player.graphics.active.boundingBox.height);

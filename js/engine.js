@@ -6,7 +6,6 @@ function RPGToolkit() {
   this.craftyBoard = {};
   this.craftyPlayer = {};
   this.tilesets = {};
-  this.sandbox = document.getElementById("sandbox");
   this.rpgcodeApi = {};
   this.tileSize = 32;
 }
@@ -147,7 +146,7 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
             y: tkPlayer.y,
             player: tkPlayer})
           .fourway(50)
-          .collision(new Crafty.polygon([-20, 10, 20, 10, 20, 25, -20, 25]))
+          .collision(new Crafty.polygon([-15, 10, 15, 10, 15, 25, -15, 25]))
           .checkHits("Solid")
           .bind("HitOn", function (hitData) {
             this.player.checkCollisions(hitData[0], this);
@@ -189,8 +188,19 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
           .checkHits("Solid")
           .collision(new Crafty.polygon([0, 0, 32, 0, 32, 32, 0, 32]))
           .bind("HitOn", function (hitData) {
-            this.x += hitData[0].normal.x;
-            this.y += hitData[0].normal.y;
+            var vectorType = hitData[0].obj.vectorType;
+            switch (vectorType) {
+              case "solid":
+                this.x += hitData[0].normal.x;
+                this.y += hitData[0].normal.y;
+                break;
+              case "item":
+                console.log(hitData[0]);
+                this.x += hitData[0].normal.x;
+                this.y += hitData[0].normal.y;
+                break;
+            }
+            
             this.resetHitChecks();
           });
   entity.visible = false;
@@ -204,11 +214,13 @@ RPGToolkit.prototype.runProgram = function (filename, source) {
           .concat(window.location.hostname)
           .concat(":".concat(location.port));
   
-  this.rpgcodeApi.source = source; // What called this program.
+  this.rpgcodeApi.source = source; // Entity that triggered the program.
 
+  rpgtoolkit.craftyPlayer.disableControl();
+  
   var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
   program.whenConnected(function () {
-    rpgtoolkit.craftyPlayer.disableControl();
+    
   });
   program.whenDisconnected(function () {
     rpgtoolkit.craftyPlayer.enableControl();

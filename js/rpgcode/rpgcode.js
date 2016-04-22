@@ -3,11 +3,13 @@ function rpgcode() {
     clear: this.clear,
     delay: this.delay,
     getGlobal: this.getGlobal,
+    getPlayerDirection: this.getPlayerDirection,
     getPlayerLocation: this.getPlayerLocation,
     getRenderNowCanvas: this.getRenderNowCanvas,
     loadAssets: this.loadAssets,
     log: this.log,
     pixelText: this.pixelText,
+    pushItem: this.pushItem,
     pushPlayer: this.pushPlayer,
     removeAssets: this.removeAssets,
     renderNow: this.renderNow,
@@ -46,6 +48,10 @@ rpgcode.prototype.getGlobal = function (id, callback) {
   callback(rpgtoolkit.rpgcodeApi.globals[id]);
 };
 
+rpgcode.prototype.getPlayerDirection = function (callback) {
+  callback(rpgtoolkit.craftyPlayer.player.direction);
+};
+
 rpgcode.prototype.getPlayerLocation = function (callback) {
   var instance = rpgtoolkit.craftyPlayer;
   callback(instance.x / rpgtoolkit.tileSize,
@@ -75,6 +81,14 @@ rpgcode.prototype.pixelText = function (x, y, text, canvasId) {
     context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
     context.font = rpgtoolkit.rpgcodeApi.font;
     context.fillText(text, x, y);
+  }
+};
+
+rpgcode.prototype.pushItem = function(item, direction) {
+  switch (item) {
+    case "source":
+      rpgtoolkit.rpgcodeApi.source.move(direction, 1);
+      break;
   }
 };
 

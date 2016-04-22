@@ -25,10 +25,10 @@ function player(filename) {
 }
 
 player.prototype.DirectionEnum = {
-  NORTH: 0,
-  SOUTH: 1,
-  EAST: 2,
-  WEST: 3
+  NORTH: "n",
+  SOUTH: "s",
+  EAST: "e",
+  WEST: "w"
 };
 
 player.prototype.loadGraphics = function () {
@@ -119,6 +119,11 @@ player.prototype.checkCollisions = function (collision, entity) {
       //       does it have a program attached etc.
       entity.x += collision.normal.x;
       entity.y += collision.normal.y;
+     
+      if(object.sprite.activationProgram) {
+        rpgtoolkit.runProgram(PATH_PROGRAM.concat(object.sprite.activationProgram), object);
+      }
+      
       entity.resetHitChecks();
       break;
     case "program":
