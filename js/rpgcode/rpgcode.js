@@ -2,13 +2,17 @@ function rpgcode() {
   this.api = {
     clear: this.clear,
     delay: this.delay,
+    fillRect: this.fillRect,
     getGlobal: this.getGlobal,
     getPlayerDirection: this.getPlayerDirection,
     getPlayerLocation: this.getPlayerLocation,
     getRenderNowCanvas: this.getRenderNowCanvas,
+    keyDown: this.keyDown,
+    keyUp: this.keyUp,
     loadAssets: this.loadAssets,
     log: this.log,
     pixelText: this.pixelText,
+    play: this.play,
     pushItem: this.pushItem,
     pushPlayer: this.pushPlayer,
     removeAssets: this.removeAssets,
@@ -17,9 +21,10 @@ function rpgcode() {
     sendToBoard: this.sendToBoard,
     setColor: this.setColor,
     setGlobal: this.setGlobal,
-    setImage: this.setImage
+    setImage: this.setImage,
+    stop: this.stop
   };
-  this.source = {}; // The entity that trigger the program.
+  this.source = {}; // The entity that triggered the program.
   this.canvases = {"renderNowCanvas": {
       canvas: rpgtoolkit.screen.renderNowCanvas,
       render: false
@@ -44,6 +49,16 @@ rpgcode.prototype.delay = function (ms, callback) {
   Crafty.e("Delay").delay(callback, ms);
 };
 
+rpgcode.prototype.fillRect = function (x, y, width, height, canvasId) {
+  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  if (instance) {
+    var context = instance.canvas.getContext("2d");
+    var rgba = rpgtoolkit.rpgcodeApi.rgba;
+    context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
+    context.fillRect(x, y, width, height);
+  }
+};
+
 rpgcode.prototype.getGlobal = function (id, callback) {
   callback(rpgtoolkit.rpgcodeApi.globals[id]);
 };
@@ -61,6 +76,14 @@ rpgcode.prototype.getPlayerLocation = function (callback) {
 
 rpgcode.prototype.getRenderNowCanvas = function (callback) {
   callback("renderNowCanvas"); // Can only pass an id.
+};
+
+rpgcode.prototype.keyDown = function (key, callback) {
+  rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]] = callback;
+};
+
+rpgcode.prototype.keyUp = function (key, callback) {
+  rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]] = callback;
 };
 
 rpgcode.prototype.loadAssets = function (assets, onLoad) {
@@ -84,7 +107,12 @@ rpgcode.prototype.pixelText = function (x, y, text, canvasId) {
   }
 };
 
-rpgcode.prototype.pushItem = function(item, direction) {
+rpgcode.prototype.play = function (file, loop) {
+  var count = loop ? 1 : -1;
+  Crafty.audio.play(file, -1);
+};
+
+rpgcode.prototype.pushItem = function (item, direction) {
   switch (item) {
     case "source":
       rpgtoolkit.rpgcodeApi.source.move(direction, 1);
@@ -148,14 +176,14 @@ rpgcode.prototype.renderNow = function (canvasId) {
 };
 
 rpgcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
-  var index = rpgtoolkit.craftyBoard.tileNames.indexOf(tileName);
+  var index = rpgtoolkit.craftyBoard.board.tileNames.indexOf(tileName);
   if (index === -1) {
-    index = rpgtoolkit.craftyBoard.tileNames.push(tileName);
+    index = rpgtoolkit.craftyBoard.board.tileNames.push(tileName);
   } else {
     index += 1;
   }
-  rpgtoolkit.craftyBoard.tiles[layer][tileY][tileX] = index;
-  rpgtoolkit.craftyBoard.layerCache = []; // TODO: Very expensive.
+  rpgtoolkit.craftyBoard.board.tiles[layer][tileY][tileX] = index;
+  rpgtoolkit.craftyBoard.board.layerCache = []; // TODO: Very expensive.
 };
 
 rpgcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
@@ -179,4 +207,8 @@ rpgcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) 
       context.drawImage(image, x, y, width, height);
     }
   }
+};
+
+rpgcode.prototype.stop = function (file) {
+  Crafty.audio.stop(file);
 };

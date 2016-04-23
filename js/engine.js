@@ -7,6 +7,7 @@ function RPGToolkit() {
   this.craftyPlayer = {};
   this.tilesets = {};
   this.rpgcodeApi = {};
+  this.keyboardHandler = {};
   this.tileSize = 32;
 }
 
@@ -24,16 +25,16 @@ RPGToolkit.prototype.setup = function (filename) {
   Crafty.viewport.init(configuration.resolutionWidth, configuration.resolutionHeight);
   Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
+  this.keyboardHandler = new keyboard();
+
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
-
-  this.craftyBoard = new board(PATH_BOARD + configuration.initBoard);
-  this.loadBoard(this.craftyBoard);
+  this.createCraftyBoard(new board(PATH_BOARD + configuration.initBoard));
 
   // Setup the Player.
   var tkPlayer = new player(PATH_CHARACTER + configuration.initChar);
-  tkPlayer.x = this.craftyBoard.startingPositionX;
-  tkPlayer.y = this.craftyBoard.startingPositionY;
+  tkPlayer.x = this.craftyBoard.board.startingPositionX;
+  tkPlayer.y = this.craftyBoard.board.startingPositionY;
   this.loadPlayer(tkPlayer);
   Crafty.viewport.follow(this.craftyPlayer, 0, 0);
 
@@ -41,11 +42,34 @@ RPGToolkit.prototype.setup = function (filename) {
 
   // Run the startup program before the game logic loop.
   if (configuration.startupPrg) {
-    this.runProgram(PATH_PROGRAM + configuration.startupPrg, {});
+    this.runProgram(PATH_PROGRAM + configuration.startupPrg, {}, function () {
+      rpgtoolkit.loadBoard();
+    });
   }
 };
 
-RPGToolkit.prototype.loadBoard = function (board) {
+RPGToolkit.prototype.createCraftyBoard = function (board) {
+  var width = board.width * this.tileSize;
+  var height = board.height * this.tileSize;
+
+  Crafty.c("Board", {
+    ready: true,
+    width: width,
+    height: height,
+    init: function () {
+      this.addComponent("2D, Canvas");
+      this.attr({x: 0, y: 0, w: width, h: height, board: board, show: false});
+      this.bind("Draw", function (e) {
+        rpgtoolkit.screen.render(e.ctx);
+      });
+    }
+  });
+
+  this.craftyBoard = Crafty.e("Board");
+};
+
+RPGToolkit.prototype.loadBoard = function () {
+  var board = this.craftyBoard.board;
   /*
    * Setup vectors.
    */
@@ -82,7 +106,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
    * Setup board sprites.
    */
   var len = board.sprites.length;
-  for(var i = 0; i < len; i++) {
+  for (var i = 0; i < len; i++) {
     var sprite = board.sprites[i];
     sprite.item = new item(PATH_ITEM + sprite.fileName);
     board.sprites[i] = this.loadSprite(sprite);
@@ -94,7 +118,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
   var backgroundMusic = board.backgroundMusic;
   if (backgroundMusic) {
     if (Crafty.asset(backgroundMusic)) {
-      Crafty.audio.player(backgroundMusic);
+      Crafty.audio.play(backgroundMusic);
     } else {
       var assets = {"audio": {}};
       assets.audio[board.backgroundMusic] = board.backgroundMusic;
@@ -104,37 +128,21 @@ RPGToolkit.prototype.loadBoard = function (board) {
     }
   }
 
-  var width = this.craftyBoard.width * this.tileSize;
-  var height = this.craftyBoard.height * this.tileSize;
-
-  Crafty.c("Board", {
-    ready: true,
-    width: width,
-    height: height,
-    init: function () {
-      this.addComponent("2D, Canvas");
-      this.attr({x: 0, y: 0, w: width, h: height});
-      this.bind("Draw", function (e) {
-        rpgtoolkit.screen.render(e.ctx);
-      });
-    }
-  });
-
-  Crafty.e("Board");
+  this.craftyBoard.show = true;
 };
 
 RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
   this.craftyPlayer.disableControl();
 
-  this.craftyBoard = {};
   Crafty("Solid").destroy();
   Crafty("Board").destroy();
   Crafty.audio.stop();
 
   this.craftyPlayer.x = tileX * this.tileSize;
   this.craftyPlayer.y = tileY * this.tileSize;
-  this.craftyBoard = new board(PATH_BOARD + boardName);
-  this.loadBoard(this.craftyBoard);
+
+  this.createCraftyBoard(new board(PATH_BOARD + boardName));
+  this.loadBoard();
 
   this.craftyPlayer.enableControl();
 };
@@ -182,7 +190,7 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
 
 RPGToolkit.prototype.loadSprite = function (sprite) {
   // TODO: width and height of item must be contain the collision polygon.
-  var attr = {x: sprite.x , y: sprite.y, w: 32, h: 32, vectorType: "item", sprite: sprite};
+  var attr = {x: sprite.x, y: sprite.y, w: 32, h: 32, vectorType: "item", sprite: sprite};
   var entity = Crafty.e("2D, Solid, Collision")
           .attr(attr)
           .checkHits("Solid")
@@ -200,29 +208,32 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
                 this.y += hitData[0].normal.y;
                 break;
             }
-            
+
             this.resetHitChecks();
           });
   entity.visible = false;
   return entity;
 };
 
-RPGToolkit.prototype.runProgram = function (filename, source) {
+RPGToolkit.prototype.runProgram = function (filename, source, callback) {
   // Provide the full path for Jailed.
   var host = location.protocol
           .concat("//")
           .concat(window.location.hostname)
           .concat(":".concat(location.port));
-  
+
   this.rpgcodeApi.source = source; // Entity that triggered the program.
 
   rpgtoolkit.craftyPlayer.disableControl();
-  
+
   var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
   program.whenConnected(function () {
-    
+
   });
   program.whenDisconnected(function () {
+    if (callback) {
+      callback();
+    }
     rpgtoolkit.craftyPlayer.enableControl();
   });
 };
