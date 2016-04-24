@@ -190,7 +190,15 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
 
 RPGToolkit.prototype.loadSprite = function (sprite) {
   // TODO: width and height of item must be contain the collision polygon.
-  var attr = {x: sprite.x, y: sprite.y, w: 32, h: 32, vectorType: "item", sprite: sprite};
+  var attr = {
+    x: sprite.x,
+    y: sprite.y,
+    layer: sprite.layer,
+    w: 32,
+    h: 32,
+    vectorType: "item",
+    sprite: sprite
+  };
   var entity = Crafty.e("2D, Solid, Collision")
           .attr(attr)
           .checkHits("Solid")
