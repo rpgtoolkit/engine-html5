@@ -196,8 +196,8 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
     x: sprite.x,
     y: sprite.y,
     layer: sprite.layer,
-    w: 32,
-    h: 32,
+    w: this.tileSize,
+    h: this.tileSize,
     vectorType: "item",
     sprite: sprite
   };

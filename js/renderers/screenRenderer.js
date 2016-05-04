@@ -9,7 +9,7 @@ screenRenderer.prototype.render = function (context) {
   var y = -Crafty.viewport._y;
   var width = Crafty.viewport._width;
   var height = Crafty.viewport._height;
-  
+
   if (rpgtoolkit.craftyBoard.show) {
     this.board = rpgtoolkit.craftyBoard.board;
 
@@ -41,7 +41,12 @@ screenRenderer.prototype.render = function (context) {
         if (i === sprite.layer && item.renderReady) {
           var asset = Crafty.__paths.images + item.graphics.active.frames[item.graphics.frameIndex];
           var frame = Crafty.assets[asset];
-          context.drawImage(frame, entity.x, entity.y, entity.w, entity.h);
+          context.drawImage(
+                  frame, 
+                  entity.x - (frame.width / 2), 
+                  entity.y - (frame.height / 2), 
+                  item.graphics.active.animationWidth, 
+                  item.graphics.active.animationHeight);
         }
       });
 

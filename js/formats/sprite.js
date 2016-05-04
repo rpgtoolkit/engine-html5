@@ -1,5 +1,5 @@
 function Sprite() {
-  
+
 }
 
 Sprite.prototype.DirectionEnum = {
@@ -15,18 +15,28 @@ Sprite.prototype.loadGraphics = function () {
   frames = frames.concat(this.graphics.south.frames);
   frames = frames.concat(this.graphics.east.frames);
   frames = frames.concat(this.graphics.west.frames);
-  
+
   // Remove the duplicates.
-  var unique = frames.reduce(function(a, b) {
-    if (a.indexOf(b) < 0 ) {
+  var unique = frames.reduce(function (a, b) {
+    if (a.indexOf(b) < 0) {
       a.push(b);
     }
     return a;
-  },[]);
-  
-  // TODO: Check what is already loaded by Crafty.
+  }, []);
 
-  this.loadFrames(unique);
+  // Remove those already loaded by Crafty.
+  for (var i = unique.length - 1; i >= 0; i--) {
+    var key = Crafty.__paths.images + unique[i];
+    if (Crafty.asset(key)) {
+      unique.splice(i, 1);
+    }
+  }
+
+  if (unique.length === 0) {
+    this.setReady();
+  } else {
+    this.loadFrames(unique);
+  }
 };
 
 Sprite.prototype.loadFrames = function (frames) {
@@ -38,10 +48,7 @@ Sprite.prototype.loadFrames = function (frames) {
   Crafty.load(assets,
           function () {
             // when loaded
-            entity.graphics.active = entity.graphics.south;
-            entity.renderReady = true;
-            var e = {ctx: Crafty.canvasLayer.context};
-            Crafty.trigger("Draw", e);
+            entity.setReady();
           },
           function (e) {
             // progress
@@ -50,6 +57,13 @@ Sprite.prototype.loadFrames = function (frames) {
             // uh oh, error loading
             console.error("failed to load frames for: " + entity);
           });
+};
+
+Sprite.prototype.setReady = function () {
+  this.graphics.active = this.graphics.south;
+  this.renderReady = true;
+  var e = {ctx: Crafty.canvasLayer.context};
+  Crafty.trigger("Draw", e);
 };
 
 Sprite.prototype.animate = function (step) {

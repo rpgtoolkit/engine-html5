@@ -18,6 +18,7 @@ function Item(filename) {
   item.loadFrames = this.loadFrames;
 
   item.direction = this.DirectionEnum.SOUTH;
+  item.setReady = this.setReady;
   item.renderReady = false;
   
   return item;

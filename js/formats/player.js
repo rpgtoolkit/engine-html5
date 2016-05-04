@@ -18,6 +18,7 @@ function Player(filename) {
   player.loadFrames = this.loadFrames;
 
   player.direction = this.DirectionEnum.SOUTH;
+  player.setReady = this.setReady;
   player.renderReady = false;
 
   return player;
