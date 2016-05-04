@@ -32,7 +32,7 @@ RPGToolkit.prototype.setup = function (filename) {
   this.createCraftyBoard(new board(PATH_BOARD + configuration.initBoard));
 
   // Setup the Player.
-  var tkPlayer = new player(PATH_CHARACTER + configuration.initChar);
+  var tkPlayer = new Player(PATH_CHARACTER + configuration.initChar);
   tkPlayer.x = this.craftyBoard.board.startingPositionX;
   tkPlayer.y = this.craftyBoard.board.startingPositionY;
   this.loadPlayer(tkPlayer);
@@ -108,8 +108,10 @@ RPGToolkit.prototype.loadBoard = function () {
   var len = board.sprites.length;
   for (var i = 0; i < len; i++) {
     var sprite = board.sprites[i];
-    sprite.item = new item(PATH_ITEM + sprite.fileName);
-    board.sprites[i] = this.loadSprite(sprite);
+    sprite.item = new Item(PATH_ITEM + sprite.fileName);
+    var boardSprite = this.loadSprite(sprite);
+    boardSprite.sprite.item.loadGraphics();
+    board.sprites[i] = boardSprite;
   }
 
   /*

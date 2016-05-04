@@ -36,9 +36,12 @@ screenRenderer.prototype.render = function (context) {
        * Step 2: Render items.
        */
       this.board.sprites.forEach(function (entity) {
-        if (i === entity.sprite.layer) {
-          var image = Crafty.asset(Crafty.__paths.images + "block.png");
-          context.drawImage(image, entity.x, entity.y, entity.w, entity.h);
+        var sprite = entity.sprite;
+        var item = sprite.item;
+        if (i === sprite.layer && item.renderReady) {
+          var asset = Crafty.__paths.images + item.graphics.active.frames[item.graphics.frameIndex];
+          var frame = Crafty.assets[asset];
+          context.drawImage(frame, entity.x, entity.y, entity.w, entity.h);
         }
       });
 
