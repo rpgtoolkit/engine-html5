@@ -10,6 +10,10 @@ screenRenderer.prototype.render = function (context) {
   var width = Crafty.viewport._width;
   var height = Crafty.viewport._height;
 
+  var player = rpgtoolkit.craftyPlayer.player;
+  player.x = rpgtoolkit.craftyPlayer.x;
+  player.y = rpgtoolkit.craftyPlayer.y;
+
   if (rpgtoolkit.craftyBoard.show) {
     this.board = rpgtoolkit.craftyBoard.board;
 
@@ -28,62 +32,80 @@ screenRenderer.prototype.render = function (context) {
       layer = this.board.tiles[i];
 
       /*
-       * Step 1: Render this layer. 
+       * Render this layer. 
        */
       context.drawImage(this.board.layerCache[i], x, y, width, height, x, y, width, height);
 
+      var layerSprites = [];
+      if (player.layer === i && player.renderReady) {
+        layerSprites.push(player);
+      }
+
       /*
-       * Step 2: Render items.
+       * Render items.
        */
       this.board.sprites.forEach(function (entity) {
         var sprite = entity.sprite;
         var item = sprite.item;
         if (i === sprite.layer && item.renderReady) {
-          var asset = Crafty.__paths.images + item.graphics.active.frames[item.graphics.frameIndex];
-          var frame = Crafty.assets[asset];
-          context.drawImage(
-                  frame, 
-                  entity.x - (frame.width / 2), 
-                  entity.y - (frame.height / 2), 
-                  item.graphics.active.animationWidth, 
-                  item.graphics.active.animationHeight);
+          sprite.item.x = entity.x;
+          sprite.item.y = entity.y;
+          layerSprites.push(sprite.item);
         }
+      });
+      
+      layerSprites.sort(function(a, b) {
+         return a.y - b.y;
+      });
+
+      layerSprites.forEach(function (sprite) {
+        var asset = Crafty.__paths.images + 
+                sprite.graphics.active.frames[sprite.graphics.frameIndex];
+        var frame = Crafty.assets[asset];
+        context.drawImage(
+                frame,
+                sprite.x - (frame.width / 2),
+                sprite.y - frame.height,
+                sprite.graphics.active.animationWidth,
+                sprite.graphics.active.animationHeight);
       });
 
       /*
-       * Step 3: Render npcs.
+       * Render npcs.
        */
       // TODO: render any npcs on this layer.
 
       /*
-       * Step 4: Render the player above everything on this layer.
+       * Render the player above everything on this layer.
        */
-      var player = rpgtoolkit.craftyPlayer.player;
-      if (player.layer === i && player.renderReady) {
-        var asset = Crafty.__paths.images + player.graphics.active.frames[player.graphics.frameIndex];
-        var frame = Crafty.assets[asset];
-        context.drawImage(
-                frame,
-                rpgtoolkit.craftyPlayer.x - (frame.width / 2),
-                rpgtoolkit.craftyPlayer.y - (frame.height / 2),
-                player.graphics.active.animationWidth,
-                player.graphics.active.animationHeight);
-
-        // Draw player collision rectangle.
-        context.beginPath();
-        context.lineWidth = "2";
-        context.strokeStyle = "#FFFFFF";
-        context.rect(
-                rpgtoolkit.craftyPlayer.x - 15,
-                rpgtoolkit.craftyPlayer.y + 10,
-                player.graphics.active.boundingBox.width,
-                player.graphics.active.boundingBox.height);
-        context.stroke();
-      }
+//      var player = rpgtoolkit.craftyPlayer.player;
+//      if (player.layer === i && player.renderReady) {
+//        var asset = Crafty.__paths.images + player.graphics.active.frames[player.graphics.frameIndex];
+//        var frame = Crafty.assets[asset];
+//        context.drawImage(
+//                frame,
+//                rpgtoolkit.craftyPlayer.x - (frame.width / 2),
+//                rpgtoolkit.craftyPlayer.y - frame.height,
+//                player.graphics.active.animationWidth,
+//                player.graphics.active.animationHeight);
+//
+//        // Draw player collision rectangle.
+//        var boxWidth = player.graphics.active.boundingBox.width;
+//        var boxHeight = player.graphics.active.boundingBox.height;
+//        context.beginPath();
+//        context.lineWidth = "2";
+//        context.strokeStyle = "#FFFFFF";
+//        context.rect(
+//                rpgtoolkit.craftyPlayer.x - (boxWidth / 2),
+//                rpgtoolkit.craftyPlayer.y - boxHeight,
+//                boxWidth,
+//                boxHeight);
+//        context.stroke();
+//      }
     }
 
     /*
-     * Step 5: (Optional) Render Vectors.
+     * (Optional) Render Vectors.
      */
     this.board.vectors.forEach(function (vector) {
       var haveMoved = false;
@@ -103,7 +125,7 @@ screenRenderer.prototype.render = function (context) {
     }, this);
 
     /*
-     * Step 6: (Optional) Render Programs.
+     * (Optional) Render Programs.
      */
     this.board.programs.forEach(function (program) {
       var haveMoved = false;
@@ -124,7 +146,7 @@ screenRenderer.prototype.render = function (context) {
   }
 
   /*
-   * Step 7: Render rpgcode canvases.
+   * Render rpgcode canvases.
    */
   var canvases = rpgtoolkit.rpgcodeApi.canvases;
   for (var property in canvases) {

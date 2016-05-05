@@ -156,7 +156,7 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
             y: tkPlayer.y,
             player: tkPlayer})
           .fourway(50)
-          .collision(new Crafty.polygon([-15, 10, 15, 10, 15, 25, -15, 25]))
+          .collision(new Crafty.polygon([-15, -10, 15, -10, -15, 0, 15, 0]))
           .checkHits("Solid")
           .bind("HitOn", function (hitData) {
             this.player.checkCollisions(hitData[0], this);
@@ -204,7 +204,7 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
   var entity = Crafty.e("2D, Solid, Collision")
           .attr(attr)
           .checkHits("Solid")
-          .collision(new Crafty.polygon([0, 0, 32, 0, 32, 32, 0, 32]))
+          .collision(new Crafty.polygon([-16, -16, 16, -16, 16, 16, -16, 16]))
           .bind("HitOn", function (hitData) {
             var vectorType = hitData[0].obj.vectorType;
             switch (vectorType) {
