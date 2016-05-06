@@ -41,10 +41,12 @@ RPGToolkit.prototype.setup = function (filename) {
   this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
-  if (configuration.startupPrg) {
+  if (!configuration.startupPrg) {
     this.runProgram(PATH_PROGRAM + configuration.startupPrg, {}, function () {
       rpgtoolkit.loadBoard();
     });
+  } else {
+    rpgtoolkit.loadBoard();
   }
 };
 
@@ -204,22 +206,9 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
   var entity = Crafty.e("2D, Solid, Collision")
           .attr(attr)
           .checkHits("Solid")
-          .collision(new Crafty.polygon([-16, -16, 16, -16, 16, 16, -16, 16]))
+          .collision(new Crafty.polygon([-16, -32, 16, -32, 16, 0, -16, 0]))
           .bind("HitOn", function (hitData) {
-            var vectorType = hitData[0].obj.vectorType;
-            switch (vectorType) {
-              case "solid":
-                this.x += hitData[0].normal.x;
-                this.y += hitData[0].normal.y;
-                break;
-              case "item":
-                console.log(hitData[0]);
-                this.x += hitData[0].normal.x;
-                this.y += hitData[0].normal.y;
-                break;
-            }
-
-            this.resetHitChecks();
+            this.sprite.item.checkCollisions(hitData[0], this);
           });
   entity.visible = false;
   return entity;

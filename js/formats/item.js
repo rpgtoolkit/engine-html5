@@ -23,3 +23,19 @@ function Item(filename) {
   
   return item;
 }
+
+Item.prototype.checkCollisions = function (collision, entity) {
+  var object = collision.obj;
+  switch (object.vectorType) {
+    case "item":
+      entity.x += collision.normal.x;
+      entity.y += collision.normal.y;
+      entity.resetHitChecks();
+      break;
+    case "solid":
+      entity.x += collision.normal.x;
+      entity.y += collision.normal.y;
+      entity.resetHitChecks();
+      break;
+  }
+};

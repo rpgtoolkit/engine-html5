@@ -244,7 +244,7 @@ rpgcode.prototype.playSound = function (file, loop) {
 };
 
 /**
- * Pushs the item by 1 pixel in the give direction.
+ * Pushs the item by 8 pixels in the give direction.
  * 
  * @param {type} item
  * @param {type} direction
@@ -253,58 +253,19 @@ rpgcode.prototype.playSound = function (file, loop) {
 rpgcode.prototype.pushItem = function (item, direction) {
   switch (item) {
     case "source":
-      rpgtoolkit.rpgcodeApi.source.move(direction, 1);
+      rpgtoolkit.rpgcodeApi.source.move(direction, 8);
       break;
   }
 };
 
 /**
- * Pushs the player by 1 pixel in the given direction.
+ * Pushs the player by 8 pixels in the given direction.
  * 
  * @param {type} direction
  * @returns {undefined}
  */
 rpgcode.prototype.pushPlayer = function (direction) {
-  // Naive, player could go through vectors with this.
-  var from = {x: rpgtoolkit.craftyPlayer.x, y: rpgtoolkit.craftyPlayer.y};
-  switch (direction) {
-    case "NORTH":
-      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "SOUTH":
-      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "EAST":
-      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "WEST":
-      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "NORTHEAST":
-      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize;
-      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "NORTHWEST":
-      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize;
-      rpgtoolkit.craftyPlayer.y -= rpgtoolkit.tileSize;
-      Crafty.trigger("Moved", from);
-      break;
-    case "SOUTHEAST":
-      rpgtoolkit.craftyPlayer.x += rpgtoolkit.tileSize
-      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize
-      Crafty.trigger("Moved", from);
-      break;
-    case "SOUTHWEST":
-      rpgtoolkit.craftyPlayer.x -= rpgtoolkit.tileSize
-      rpgtoolkit.craftyPlayer.y += rpgtoolkit.tileSize
-      Crafty.trigger("Moved", from);
-      break;
-  }
+  rpgtoolkit.craftyPlayer.move(direction, 8);
 };
 
 /**
