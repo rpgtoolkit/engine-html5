@@ -1,6 +1,7 @@
 function rpgcode() {
   this.api = {
     clearCanvas: this.clearCanvas,
+    clearDialog: this.clearDialog,
     createCanvas: this.createCanvas,
     delay: this.delay,
     destroyCanvas: this.destroyCanvas,
@@ -23,17 +24,30 @@ function rpgcode() {
     setColor: this.setColor,
     setGlobal: this.setGlobal,
     setImage: this.setImage,
+    setDialogGraphics: this.setDialogGraphics,
+    showDialog: this.showDialog,
     stopSound: this.stopSound
   };
+
   this.source = {}; // The entity that triggered the program.
+
   this.canvases = {"renderNowCanvas": {
       canvas: rpgtoolkit.screen.renderNowCanvas,
       render: false
     }
   };
+
   this.globals = {};
+
   this.rgba = {r: 255, g: 255, b: 255, a: 1.0};
   this.font = "14px Arial";
+
+  this.dialogWindow = {
+    visible: false,
+    profile: null,
+    background: null,
+    lineY: 5
+  };
 }
 
 /**
@@ -54,6 +68,18 @@ rpgcode.prototype.clearCanvas = function (canvasId) {
     instance.render = false;
     Crafty.trigger("Invalidate");
   }
+};
+
+/**
+ * Clears and hides the dialog box.
+ * 
+ * @returns {undefined}
+ */
+rpgcode.prototype.clearDialog = function () {
+  var rpgcode = rpgtoolkit.rpgcodeApi;
+  rpgcode.dialogWindow.visible = false;
+  rpgcode.dialogWindow.lineY = 5;
+  rpgcode.clearCanvas("renderNowCanvas");
 };
 
 /**
@@ -288,7 +314,7 @@ rpgcode.prototype.renderNow = function (canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
-  
+
   var canvas = rpgtoolkit.rpgcodeApi.canvases[canvasId];
   if (canvas) {
     canvas.render = true;
@@ -376,6 +402,43 @@ rpgcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) 
       context.drawImage(image, x, y, width, height);
     }
   }
+};
+
+/**
+ * Sets the dialog box's speaker profile image and the background image.
+ * 
+ * @param {type} profileImage
+ * @param {type} backgroundImage
+ * @returns {undefined}
+ */
+rpgcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
+  rpgtoolkit.rpgcodeApi.dialogWindow.profile = profileImage;
+  rpgtoolkit.rpgcodeApi.dialogWindow.background = backgroundImage;
+};
+
+/**
+ * Shows the dialog window and adds the dialog to it if it is already 
+ * visible the dialog is just appended.
+ * 
+ * Note the dialog window is drawn on the default "renderNowCanvas".
+ * 
+ * @param {type} dialog
+ * @returns {undefined}
+ */
+rpgcode.prototype.showDialog = function (dialog) {
+  var rpgcode = rpgtoolkit.rpgcodeApi;
+  var dialogWindow = rpgcode.dialogWindow;
+  
+  if (!dialogWindow.visible) {
+    rpgcode.setImage(dialogWindow.profile, 0, 0, 100, 100);
+    rpgcode.setImage(dialogWindow.background, 100, 0, 540, 100);
+    dialogWindow.visible = true;
+
+  }
+
+  dialogWindow.lineY += parseInt(rpgcode.font);
+  rpgcode.drawText(105, dialogWindow.lineY, dialog);
+  rpgcode.renderNow();
 };
 
 /**

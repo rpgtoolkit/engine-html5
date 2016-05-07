@@ -41,7 +41,7 @@ RPGToolkit.prototype.setup = function (filename) {
   this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
-  if (!configuration.startupPrg) {
+  if (configuration.startupPrg) {
     this.runProgram(PATH_PROGRAM + configuration.startupPrg, {}, function () {
       rpgtoolkit.loadBoard();
     });

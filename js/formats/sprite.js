@@ -104,8 +104,6 @@ Sprite.prototype.checkCollisions = function (collision, entity) {
   var object = collision.obj;
   switch (object.vectorType) {
     case "item":
-      // TODO: need to examine the item, determine if it is a solid,
-      //       does it have a program attached etc.
       entity.x += collision.normal.x;
       entity.y += collision.normal.y;
 
