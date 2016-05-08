@@ -5,18 +5,19 @@ function rpgcode() {
     createCanvas: this.createCanvas,
     delay: this.delay,
     destroyCanvas: this.destroyCanvas,
+    drawOntoCanvas: this.drawOntoCanvas,
+    drawText: this.drawText,
     fillRect: this.fillRect,
     getGlobal: this.getGlobal,
     getPlayerDirection: this.getPlayerDirection,
     getPlayerLocation: this.getPlayerLocation,
-    keyDown: this.keyDown,
-    keyUp: this.keyUp,
     loadAssets: this.loadAssets,
     log: this.log,
-    drawText: this.drawText,
     playSound: this.playSound,
     pushItem: this.pushItem,
     pushPlayer: this.pushPlayer,
+    registerKeyDown: this.registerKeyDown,
+    registerKeyUp: this.registerKeyUp,
     removeAssets: this.removeAssets,
     renderNow: this.renderNow,
     replaceTile: this.replaceTile,
@@ -26,7 +27,9 @@ function rpgcode() {
     setImage: this.setImage,
     setDialogGraphics: this.setDialogGraphics,
     showDialog: this.showDialog,
-    stopSound: this.stopSound
+    stopSound: this.stopSound,
+    unregisterKeyDown: this.unregisterKeyDown,
+    unregisterKeyUp: this.unregisterKeyUp
   };
 
   this.source = {}; // The entity that triggered the program.
@@ -121,6 +124,53 @@ rpgcode.prototype.destroyCanvas = function (canvasId) {
 };
 
 /**
+ * 
+ * 
+ * @param {type} sourceId
+ * @param {type} x
+ * @param {type} y
+ * @param {type} width
+ * @param {type} height
+ * @param {type} targetId
+ * @returns {undefined}
+ */
+rpgcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targetId) {
+  var source = rpgtoolkit.rpgcodeApi.canvases[sourceId];
+  var target = rpgtoolkit.rpgcodeApi.canvases[targetId];
+
+  if (source && target) {
+    var sourceCanvas = source.canvas;
+    var targetContext = target.canvas.getContext("2d");
+    targetContext.drawImage(sourceCanvas, x, y, width, height);
+  }
+};
+
+/**
+ * Draws the text on the canvas startig at the specified (x, y) position, if no 
+ * canvas is specified it defaults to the "renderNowCanvas".
+ * 
+ * @param {type} x
+ * @param {type} y
+ * @param {type} text
+ * @param {type} canvasId
+ * @returns {undefined}
+ */
+rpgcode.prototype.drawText = function (x, y, text, canvasId) {
+  if (!canvasId) {
+    canvasId = "renderNowCanvas";
+  }
+
+  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  if (instance) {
+    var context = instance.canvas.getContext("2d");
+    var rgba = rpgtoolkit.rpgcodeApi.rgba;
+    context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
+    context.font = rpgtoolkit.rpgcodeApi.font;
+    context.fillText(text, x, y);
+  }
+};
+
+/**
  * Fills a solid rectangle on the canvas.
  * 
  * @param {type} x start x postion
@@ -179,36 +229,6 @@ rpgcode.prototype.getPlayerLocation = function (callback) {
 };
 
 /**
- * Registers a keyDown listener for a specific key, for a list of valid key values see:
- *    http://craftyjs.com/api/Crafty-keys.html
- *    
- * The callback function will continue to be invoked for every keyDown event until it
- * is unregistered.
- * 
- * @param {type} key
- * @param {type} callback
- * @returns {undefined}
- */
-rpgcode.prototype.keyDown = function (key, callback) {
-  rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]] = callback;
-};
-
-/**
- * Registers a keyUp listener for a specific key, for a list of valid key values see:
- *    http://craftyjs.com/api/Crafty-keys.html
- *    
- * The callback function will continue to be invoked for every keyUp event until it
- * is unregistered.
- * 
- * @param {type} key
- * @param {type} callback
- * @returns {undefined}
- */
-rpgcode.prototype.keyUp = function (key, callback) {
-  rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]] = callback;
-};
-
-/**
  * Loads the requested assets into the engine, when all of the assets have been loaded
  * the onLoad callback is invoked.
  * 
@@ -230,31 +250,6 @@ rpgcode.prototype.loadAssets = function (assets, onLoad) {
  */
 rpgcode.prototype.log = function (message) {
   console.log(message);
-};
-
-/**
- * Draws the text on the canvas startig at the specified (x, y) position, if no 
- * canvas is specified it defaults to the "renderNowCanvas".
- * 
- * @param {type} x
- * @param {type} y
- * @param {type} text
- * @param {type} canvasId
- * @returns {undefined}
- */
-rpgcode.prototype.drawText = function (x, y, text, canvasId) {
-  if (!canvasId) {
-    canvasId = "renderNowCanvas";
-  }
-
-  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
-  if (instance) {
-    var context = instance.canvas.getContext("2d");
-    var rgba = rpgtoolkit.rpgcodeApi.rgba;
-    context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
-    context.font = rpgtoolkit.rpgcodeApi.font;
-    context.fillText(text, x, y);
-  }
 };
 
 /**
@@ -292,6 +287,36 @@ rpgcode.prototype.pushItem = function (item, direction) {
  */
 rpgcode.prototype.pushPlayer = function (direction) {
   rpgtoolkit.craftyPlayer.move(direction, 8);
+};
+
+/**
+ * Registers a keyDown listener for a specific key, for a list of valid key values see:
+ *    http://craftyjs.com/api/Crafty-keys.html
+ *    
+ * The callback function will continue to be invoked for every keyDown event until it
+ * is unregistered.
+ * 
+ * @param {type} key
+ * @param {type} callback
+ * @returns {undefined}
+ */
+rpgcode.prototype.registerKeyDown = function (key, callback) {
+  rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]] = callback;
+};
+
+/**
+ * Registers a keyUp listener for a specific key, for a list of valid key values see:
+ *    http://craftyjs.com/api/Crafty-keys.html
+ *    
+ * The callback function will continue to be invoked for every keyUp event until it
+ * is unregistered.
+ * 
+ * @param {type} key
+ * @param {type} callback
+ * @returns {undefined}
+ */
+rpgcode.prototype.registerKeyUp = function (key, callback) {
+  rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]] = callback;
 };
 
 /**
@@ -428,7 +453,7 @@ rpgcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
 rpgcode.prototype.showDialog = function (dialog) {
   var rpgcode = rpgtoolkit.rpgcodeApi;
   var dialogWindow = rpgcode.dialogWindow;
-  
+
   if (!dialogWindow.visible) {
     rpgcode.setImage(dialogWindow.profile, 0, 0, 100, 100);
     rpgcode.setImage(dialogWindow.background, 100, 0, 540, 100);
@@ -449,4 +474,24 @@ rpgcode.prototype.showDialog = function (dialog) {
  */
 rpgcode.prototype.stopSound = function (file) {
   Crafty.audio.stop(file);
+};
+
+/**
+ * Removes a previously registered keyDown listener.
+ * 
+ * @param {type} key
+ * @returns {undefined}
+ */
+rpgcode.prototype.unregisterKeyDown = function (key) {
+  delete rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]];
+};
+
+/**
+ * Removes a previously registered keyUp listener.
+ * 
+ * @param {type} key
+ * @returns {undefined}
+ */
+rpgcode.prototype.unregisterKeyUp = function (key) {
+  delete rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]];
 };

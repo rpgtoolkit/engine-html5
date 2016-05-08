@@ -25,7 +25,11 @@ RPGToolkit.prototype.setup = function (filename) {
   Crafty.viewport.init(configuration.resolutionWidth, configuration.resolutionHeight);
   Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
+  // Setup run time keys.
   this.keyboardHandler = new keyboard();
+  this.keyboardHandler.downHandlers[configuration.menuKey] = function () {
+    rpgtoolkit.runProgram(PATH_PROGRAM + configuration.menuPlugin, {});
+  };
 
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
@@ -41,7 +45,7 @@ RPGToolkit.prototype.setup = function (filename) {
   this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
-  if (configuration.startupPrg) {
+  if (!configuration.startupPrg) {
     this.runProgram(PATH_PROGRAM + configuration.startupPrg, {}, function () {
       rpgtoolkit.loadBoard();
     });
@@ -225,6 +229,12 @@ RPGToolkit.prototype.runProgram = function (filename, source, callback) {
 
   rpgtoolkit.craftyPlayer.disableControl();
 
+  // Store run time key handlers.
+  var keyDownHandlers = rpgtoolkit.keyboardHandler.downHandlers;
+  var keyUpHandlers = rpgtoolkit.keyboardHandler.upHandlers;
+  rpgtoolkit.keyboardHandler.downHandlers = {};
+  rpgtoolkit.keyboardHandler.upHandlers = {};
+
   var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
   program.whenConnected(function () {
 
@@ -233,6 +243,8 @@ RPGToolkit.prototype.runProgram = function (filename, source, callback) {
     if (callback) {
       callback();
     }
+    rpgtoolkit.keyboardHandler.downHandlers = keyDownHandlers;
+    rpgtoolkit.keyboardHandler.upHandlers = keyUpHandlers;
     rpgtoolkit.craftyPlayer.enableControl();
   });
 };
