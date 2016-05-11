@@ -5,9 +5,11 @@ function rpgcode() {
     createCanvas: this.createCanvas,
     delay: this.delay,
     destroyCanvas: this.destroyCanvas,
+    destroyItem: this.destroyItem,
     drawOntoCanvas: this.drawOntoCanvas,
     drawText: this.drawText,
     fillRect: this.fillRect,
+    getBoardName: this.getBoardName,
     getGlobal: this.getGlobal,
     getPlayerDirection: this.getPlayerDirection,
     getPlayerLocation: this.getPlayerLocation,
@@ -124,6 +126,30 @@ rpgcode.prototype.destroyCanvas = function (canvasId) {
 };
 
 /**
+ * Destroys a particular item instance and removes it from play.
+ * 
+ * @param {type} itemId
+ * @returns {undefined}
+ */
+rpgcode.prototype.destroyItem = function (itemId) {
+  var len = rpgtoolkit.craftyBoard.sprites.length;
+  var index = -1;
+  
+  // TODO: store sprites based on item name if it is unique enough.
+  for (var i = 0; i < len; i++) {
+    if (rpgtoolkit.craftyBoard.sprites[i].item.name === itemId) {
+      index = i;
+      break;
+    }
+  }
+  
+  if (index > 0) {
+    delete rpgtoolkit.craftyBoard.sprites[index];
+    Crafty.trigger("Invalidate");
+  }
+};
+
+/**
  * 
  * 
  * @param {type} sourceId
@@ -191,6 +217,18 @@ rpgcode.prototype.fillRect = function (x, y, width, height, canvasId) {
     var rgba = rpgtoolkit.rpgcodeApi.rgba;
     context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
     context.fillRect(x, y, width, height);
+  }
+};
+
+/**
+ * Gets the current board's file name and returns it to the callback function.
+ * 
+ * @param {type} callback
+ * @returns {undefined}
+ */
+rpgcode.prototype.getBoardName = function(callback) {
+  if (callback) {
+    callback(rpgtoolkit.craftyBoard.board.filename);
   }
 };
 
@@ -467,13 +505,18 @@ rpgcode.prototype.showDialog = function (dialog) {
 };
 
 /**
- * Stops playing the specified sound file.
+ * Stop playing a specific sound file, if no file is set stop
+ * all sounds.
  * 
  * @param {type} file
  * @returns {undefined}
  */
 rpgcode.prototype.stopSound = function (file) {
-  Crafty.audio.stop(file);
+  if (file) {
+    Crafty.audio.stop(file);
+  } else {
+    Crafty.audio.stop();
+  }
 };
 
 /**
