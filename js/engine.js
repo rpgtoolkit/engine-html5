@@ -1,3 +1,5 @@
+/* global PATH_BITMAP, PATH_MEDIA, PATH_PROGRAM, PATH_BOARD, PATH_CHARACTER, PATH_ITEM, jailed */
+
 var rpgtoolkit = new RPGToolkit();
 
 function RPGToolkit() {
@@ -42,6 +44,7 @@ RPGToolkit.prototype.setup = function (filename) {
   this.loadPlayer(tkPlayer);
   Crafty.viewport.follow(this.craftyPlayer, 0, 0);
 
+  // Initialise the RPGCode API.
   this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
@@ -116,7 +119,7 @@ RPGToolkit.prototype.loadBoard = function () {
     var sprite = board.sprites[i];
     sprite.item = new Item(PATH_ITEM + sprite.fileName);
     var boardSprite = this.loadSprite(sprite);
-    boardSprite.sprite.item.loadGraphics();
+    boardSprite.sprite.item.load();
     board.sprites[i] = boardSprite;
   }
 
@@ -193,11 +196,11 @@ RPGToolkit.prototype.loadPlayer = function (tkPlayer) {
             this.dt = event.dt / 1000;
           });
   this.craftyPlayer.visible = false;
-  this.craftyPlayer.player.loadGraphics();
+  this.craftyPlayer.player.load();
 };
 
 RPGToolkit.prototype.loadSprite = function (sprite) {
-  // TODO: width and height of item must be contain the collision polygon.
+  // TODO: width and height of item must contain the collision polygon.
   var attr = {
     x: sprite.x,
     y: sprite.y,
@@ -229,7 +232,7 @@ RPGToolkit.prototype.runProgram = function (filename, source, callback) {
 
   rpgtoolkit.craftyPlayer.disableControl();
 
-  // Store run time key handlers.
+  // Store runtime key handlers.
   var keyDownHandlers = rpgtoolkit.keyboardHandler.downHandlers;
   var keyUpHandlers = rpgtoolkit.keyboardHandler.upHandlers;
   rpgtoolkit.keyboardHandler.downHandlers = {};

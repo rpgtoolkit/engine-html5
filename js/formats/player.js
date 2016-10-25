@@ -14,8 +14,10 @@ function Player(filename) {
   player.changeGraphics = this.changeGraphics;
   player.animate = this.animate;
   player.checkCollisions = this.checkCollisions;
-  player.loadGraphics = this.loadGraphics;
+  player.load = this.load;
   player.loadFrames = this.loadFrames;
+  player.loadSoundEffects = this.loadSoundEffects;
+  player.loadAssets = this.loadAssets;
 
   player.direction = this.DirectionEnum.SOUTH;
   player.setReady = this.setReady;

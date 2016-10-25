@@ -1,5 +1,9 @@
+/* global rpgtoolkit */
+
 function rpgcode() {
   this.api = {
+    animateItem: this.animateItem,
+    animatePlayer: this.animatePlayer,
     clearCanvas: this.clearCanvas,
     clearDialog: this.clearDialog,
     createCanvas: this.createCanvas,
@@ -28,6 +32,10 @@ function rpgcode() {
     setGlobal: this.setGlobal,
     setImage: this.setImage,
     setDialogGraphics: this.setDialogGraphics,
+    setItemLocation: this.setItemLocation,
+    setItemStance: this.setItemStance,
+    setPlayerLocation: this.setPlayerLocation,
+    setPlayerStance: this.setPlayerStance,
     showDialog: this.showDialog,
     stopSound: this.stopSound,
     unregisterKeyDown: this.unregisterKeyDown,
@@ -54,6 +62,39 @@ function rpgcode() {
     lineY: 5
   };
 }
+
+/**
+ * Play the items current animation.
+ * 
+ * @param {type} itemId
+ * @returns {undefined}
+ */
+rpgcode.prototype.animateItem = function (itemId) {
+  var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
+  if (item) {
+    
+  }
+};
+
+/**
+ * Play the players current animation.
+ * 
+ * @param {type} playerId
+ * @returns {undefined}
+ */
+rpgcode.prototype.animatePlayer = function (playerId) {
+    // TODO: playerId will be unused until parties with multiple players 
+    // are supported.
+    var player = rpgtoolkit.craftyPlayer.player;
+    var activeGraphics = player.graphics.active;
+    var frameRate = activeGraphics.frameRate;
+    var delay = frameRate * 1000; // Get number of milliseconds.
+    var repeat = activeGraphics.frames.length - 1;
+    Crafty.e("Delay").delay(function() {
+      player.animate(frameRate);
+      Crafty.trigger("Invalidate");
+    }, delay, repeat);
+};
 
 /**
  * Clears an entire canvas and triggers a redraw.
@@ -303,7 +344,7 @@ rpgcode.prototype.playSound = function (file, loop) {
 };
 
 /**
- * Pushs the item by 8 pixels in the give direction.
+ * Pushs the item by 8 pixels in the given direction.
  * 
  * @param {type} item
  * @param {type} direction
@@ -477,6 +518,79 @@ rpgcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) 
 rpgcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
   rpgtoolkit.rpgcodeApi.dialogWindow.profile = profileImage;
   rpgtoolkit.rpgcodeApi.dialogWindow.background = backgroundImage;
+};
+
+/**
+ * 
+ * @param {type} itemId
+ * @param {type} x
+ * @param {type} y
+ * @param {type} layer
+ * @param {type} isTiles
+ * @returns {undefined}
+ */
+rpgcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
+  if (isTiles) {
+    x *= rpgtoolkit.tileSize;
+    y *= rpgtoolkit.tileSize;
+  }
+  
+  var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
+  if (item) {
+    item.x = x;
+    item.y = y;
+    item.layer = layer;
+    Crafty.trigger("Invalidate");
+  }
+};
+
+/**
+ * 
+ * @param {type} itemId
+ * @param {type} stanceId
+ * @returns {undefined}
+ */
+rpgcode.prototype.setItemStance = function (itemId, stanceId) {
+  var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
+  if (item) {
+    item.changeGraphics(stanceId);
+  }
+};
+
+/**
+ * Sets the players location without triggering any animation.
+ * 
+ * @param {type} playerId
+ * @param {type} x
+ * @param {type} y
+ * @param {type} layer
+ * @param {type} isTiles
+ * @returns {undefined}
+ */
+rpgcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) {
+  if (isTiles) {
+    x *= rpgtoolkit.tileSize;
+    y *= rpgtoolkit.tileSize;
+  }
+  
+  // TODO: playerId will be unused until parties with multiple players 
+  // are supported.
+  rpgtoolkit.craftyPlayer.x = x;
+  rpgtoolkit.craftyPlayer.y = y;
+  rpgtoolkit.craftyPlayer.player.layer = layer;
+};
+
+/**
+ * 
+ * @param {type} playerId
+ * @param {type} stanceId
+ * @returns {undefined}
+ */
+rpgcode.prototype.setPlayerStance = function (playerId, stanceId) {
+  // TODO: playerId will be unused until parties with multiple players 
+  // are supported.
+  rpgtoolkit.craftyPlayer.player.changeGraphics(stanceId);
+  Crafty.trigger("Invalidate");
 };
 
 /**

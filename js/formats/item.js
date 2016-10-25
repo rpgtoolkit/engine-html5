@@ -14,8 +14,10 @@ function Item(filename) {
   item.changeGraphics = this.changeGraphics;
   item.animate = this.animate;
   item.checkCollisions = this.checkCollisions;
-  item.loadGraphics = this.loadGraphics;
+  item.load = this.load;
   item.loadFrames = this.loadFrames;
+  item.loadSoundEffects = this.loadSoundEffects;
+  item.loadAssets = this.loadAssets;
 
   item.direction = this.DirectionEnum.SOUTH;
   item.setReady = this.setReady;

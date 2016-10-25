@@ -1,3 +1,5 @@
+/* global rpgtoolkit, PATH_PROGRAM */
+
 function Sprite() {
 
 }
@@ -6,60 +8,75 @@ Sprite.prototype.DirectionEnum = {
   NORTH: "n",
   SOUTH: "s",
   EAST: "e",
-  WEST: "w"
+  WEST: "w",
+  NORTH_EAST: "ne",
+  NORTH_WEST: "nw",
+  SOUTH_EAST: "se",
+  SOUTH_WEST: "sw"
 };
 
-Sprite.prototype.loadGraphics = function () {
+Sprite.prototype.load = function () {
+  var frames = this.loadFrames();
+  var soundEffects = this.loadSoundEffects();
+  this.loadAssets(frames, soundEffects);
+};
+
+Sprite.prototype.loadAssets = function (frames, soundEffects) {
+  var entity = this;
+  var assets = {"images": frames, "audio": soundEffects};
+  console.log(assets)
+  Crafty.load(assets, // WE KEEP RESETTING THE CALLBACKS HERE!!! FIX IT!!!
+          function () {
+            // loaded
+            console.log("loaded assets=[" + assets + "] for entity=[" + entity.toString() + "].");
+            entity.setReady();
+          },
+          function (e) {
+            // progress
+            console.log("loading assets=[" + assets + "] for entity=[" + entity + "].");
+          },
+          function (e) {
+            // uh oh, error loading
+            console.error("failed to load assets=[" + assets + "] for entity=[" + entity + "].");
+          });
+};
+
+Sprite.prototype.loadFrames = function () {
   var frames = [];
   frames = frames.concat(this.graphics.north.frames);
   frames = frames.concat(this.graphics.south.frames);
   frames = frames.concat(this.graphics.east.frames);
   frames = frames.concat(this.graphics.west.frames);
 
-  // Remove the duplicates.
-  var unique = frames.reduce(function (a, b) {
-    if (a.indexOf(b) < 0) {
-      a.push(b);
-    }
-    return a;
-  }, []);
-
-  // Remove those already loaded by Crafty.
-  for (var i = unique.length - 1; i >= 0; i--) {
-    var key = Crafty.__paths.images + unique[i];
-    if (Crafty.asset(key)) {
-      unique.splice(i, 1);
+  for (var customAnimation in this.graphics.custom) {
+    if (this.graphics.custom.hasOwnProperty(customAnimation)) {
+      frames = frames.concat(this.graphics.custom[customAnimation].frames);
     }
   }
-
-  if (unique.length === 0) {
-    this.setReady();
-  } else {
-    this.loadFrames(unique);
-  }
+  
+  return frames;
 };
 
-Sprite.prototype.loadFrames = function (frames) {
-  var assets = {
-    "images": frames
-  };
+Sprite.prototype.loadSoundEffects = function () {
+  var soundEffects = {};
+  soundEffects[this.graphics.north.soundEffect] = this.graphics.north.soundEffect;
+  soundEffects[this.graphics.south.soundEffect] = this.graphics.south.soundEffect;
+  soundEffects[this.graphics.east.soundEffect] = this.graphics.east.soundEffect;
+  soundEffects[this.graphics.west.soundEffect] = this.graphics.west.soundEffect;
 
-  var entity = this;
-  Crafty.load(assets,
-          function () {
-            // when loaded
-            entity.setReady();
-          },
-          function (e) {
-            // progress
-          },
-          function (e) {
-            // uh oh, error loading
-            console.error("failed to load frames for: " + entity);
-          });
+  for (var customAnimation in this.graphics.custom) {
+    if (this.graphics.custom.hasOwnProperty(customAnimation)) {
+      soundEffects[this.graphics.custom[customAnimation].soundEffect] = this.graphics.custom[customAnimation].soundEffect;
+    }
+  }
+  
+  delete soundEffects[""]; // TODO: need to make sure this can't happen.
+  
+  return soundEffects;
 };
 
 Sprite.prototype.setReady = function () {
+  console.log("setting ready");
   this.graphics.active = this.graphics.south;
   this.renderReady = true;
   var e = {ctx: Crafty.canvasLayer.context};
@@ -97,6 +114,20 @@ Sprite.prototype.changeGraphics = function (direction) {
     case this.DirectionEnum.WEST:
       this.graphics.active = this.graphics.west;
       break;
+    case this.DirectionEnum.NORTH_EAST:
+      this.graphics.active = this.grapics.northEast;
+      break;
+    case this.DirectionEnum.NORTH_WEST:
+      this.graphics.active = this.graphics.northWest;
+      break;
+    case this.DirectionEnum.SOUTH_EAST:
+      this.graphics.active = this.graphics.southEast;
+      break;
+    case this.DirectionEnum.SOUTH_WEST:
+      this.graphics.active = this.graphics.southWest;
+      break;
+    default:
+      this.graphics.active = this.graphics.custom[direction];
   }
 };
 
