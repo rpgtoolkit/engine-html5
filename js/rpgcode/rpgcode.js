@@ -17,6 +17,7 @@ function rpgcode() {
     getGlobal: this.getGlobal,
     getPlayerDirection: this.getPlayerDirection,
     getPlayerLocation: this.getPlayerLocation,
+    getRandom: this.getRandom,
     loadAssets: this.loadAssets,
     log: this.log,
     playSound: this.playSound,
@@ -67,12 +68,39 @@ function rpgcode() {
  * Play the items current animation.
  * 
  * @param {type} itemId
+ * @param {type} animationId
+ * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.animateItem = function (itemId) {
-  var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
-  if (item) {
+rpgcode.prototype.animateItem = function (itemId, animationId, callback) {
+  // TODO: dupping code here...
+  var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
+  if (entity) {
+    var item = entity.sprite.item;
+    var resetGraphics = item.graphics.active;
+    rpgtoolkit.rpgcodeApi.setItemStance(itemId, animationId);
     
+    var activeGraphics = item.graphics.active;
+    var soundEffect = activeGraphics.soundEffect;
+    var frameRate = activeGraphics.frameRate;
+    var delay = frameRate * 1000; // Get number of milliseconds.
+    var repeat = activeGraphics.frames.length - 1;
+    
+    Crafty.e("Delay").delay(function() {
+      item.animate(frameRate);
+      Crafty.trigger("Invalidate");
+    }, delay, repeat, function() {
+      item.graphics.active = resetGraphics;
+      Crafty.trigger("Invalidate");
+      
+      if (callback) {
+        callback();
+      }
+    });
+    
+    if (soundEffect) {
+      rpgtoolkit.rpgcodeApi.playSound(soundEffect, false);
+    }
   }
 };
 
@@ -80,20 +108,37 @@ rpgcode.prototype.animateItem = function (itemId) {
  * Play the players current animation.
  * 
  * @param {type} playerId
+ * @param {type} animationId
+ * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.animatePlayer = function (playerId) {
+rpgcode.prototype.animatePlayer = function (playerId, animationId, callback) {
     // TODO: playerId will be unused until parties with multiple players 
     // are supported.
-    var player = rpgtoolkit.craftyPlayer.player;
-    var activeGraphics = player.graphics.active;
+    var resetGraphics = rpgtoolkit.craftyPlayer.player.graphics.active;
+    rpgtoolkit.rpgcodeApi.setPlayerStance(playerId, animationId);
+    
+    var activeGraphics = rpgtoolkit.craftyPlayer.player.graphics.active;
+    var soundEffect = activeGraphics.soundEffect;
     var frameRate = activeGraphics.frameRate;
     var delay = frameRate * 1000; // Get number of milliseconds.
     var repeat = activeGraphics.frames.length - 1;
+    
     Crafty.e("Delay").delay(function() {
-      player.animate(frameRate);
+      rpgtoolkit.craftyPlayer.player.animate(frameRate);
       Crafty.trigger("Invalidate");
-    }, delay, repeat);
+    }, delay, repeat, function() {
+      rpgtoolkit.craftyPlayer.player.graphics.active = resetGraphics;
+      Crafty.trigger("Invalidate");
+      
+      if (callback) {
+        callback();
+      }
+    });
+    
+    if (soundEffect) {
+      rpgtoolkit.rpgcodeApi.playSound(soundEffect, false);
+    }
 };
 
 /**
@@ -173,19 +218,9 @@ rpgcode.prototype.destroyCanvas = function (canvasId) {
  * @returns {undefined}
  */
 rpgcode.prototype.destroyItem = function (itemId) {
-  var len = rpgtoolkit.craftyBoard.sprites.length;
-  var index = -1;
-  
-  // TODO: store sprites based on item name if it is unique enough.
-  for (var i = 0; i < len; i++) {
-    if (rpgtoolkit.craftyBoard.sprites[i].item.name === itemId) {
-      index = i;
-      break;
-    }
-  }
-  
-  if (index > 0) {
-    delete rpgtoolkit.craftyBoard.sprites[index];
+  if (rpgtoolkit.craftyBoard.board.sprites[itemId]) {
+    rpgtoolkit.craftyBoard.board.sprites[itemId].destroy();
+    delete rpgtoolkit.craftyBoard.board.sprites[itemId];
     Crafty.trigger("Invalidate");
   }
 };
@@ -305,6 +340,16 @@ rpgcode.prototype.getPlayerLocation = function (callback) {
   callback(instance.x / rpgtoolkit.tileSize,
           instance.y / rpgtoolkit.tileSize,
           instance.player.layer);
+};
+
+/**
+ * 
+ * @param {type} min
+ * @param {type} max
+ * @returns {undefined}
+ */
+rpgcode.prototype.getRandom = function(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
 /**
@@ -551,9 +596,9 @@ rpgcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
  * @returns {undefined}
  */
 rpgcode.prototype.setItemStance = function (itemId, stanceId) {
-  var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
-  if (item) {
-    item.changeGraphics(stanceId);
+  var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
+  if (entity) {
+    entity.sprite.item.changeGraphics(stanceId);
   }
 };
 

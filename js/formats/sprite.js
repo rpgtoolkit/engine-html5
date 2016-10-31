@@ -19,12 +19,15 @@ Sprite.prototype.load = function () {
   var frames = this.loadFrames();
   var soundEffects = this.loadSoundEffects();
   this.loadAssets(frames, soundEffects);
+  
+  // TODO: Remove this when assest loading callbacks are implemented correctly.
+  this.setReady();
 };
 
 Sprite.prototype.loadAssets = function (frames, soundEffects) {
   var entity = this;
   var assets = {"images": frames, "audio": soundEffects};
-  console.log(assets)
+  console.log(assets);
   Crafty.load(assets, // WE KEEP RESETTING THE CALLBACKS HERE!!! FIX IT!!!
           function () {
             // loaded
