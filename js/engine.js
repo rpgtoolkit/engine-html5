@@ -1,4 +1,4 @@
-/* global PATH_BITMAP, PATH_MEDIA, PATH_PROGRAM, PATH_BOARD, PATH_CHARACTER, PATH_ITEM, jailed */
+/* global PATH_BITMAP, PATH_MEDIA, PATH_PROGRAM, PATH_BOARD, PATH_CHARACTER, PATH_ITEM, jailed, rpgcode */
 
 var rpgtoolkit = new RPGToolkit();
 
@@ -8,9 +8,16 @@ function RPGToolkit() {
   this.craftyBoard = {};
   this.craftyPlayer = {};
   this.tilesets = {};
-  this.rpgcodeApi = {};
   this.keyboardHandler = {};
   this.tileSize = 32;
+
+  // Program cache, stores programs as Function objects.
+  this.programCache = {};
+
+  // Used to store state when runProgram is called.
+  this.endProgramCallback = null;
+  this.keyDownHandlers = null;
+  this.keyUpHandlers = null;
 }
 
 /**
@@ -35,6 +42,11 @@ RPGToolkit.prototype.setup = function (filename) {
 
   // Setup the drawing canvas (game screen).
   this.screen = new screenRenderer();
+
+  // Setup the RPGcode rutime.
+  rpgcode = new RPGcode();
+
+  // Create the initial board.
   this.createCraftyBoard(new board(PATH_BOARD + configuration.initBoard));
 
   // Setup the Player.
@@ -43,9 +55,6 @@ RPGToolkit.prototype.setup = function (filename) {
   tkPlayer.y = this.craftyBoard.board.startingPositionY;
   this.loadPlayer(tkPlayer);
   Crafty.viewport.follow(this.craftyPlayer, 0, 0);
-
-  // Initialise the RPGCode API.
-  this.rpgcodeApi = new rpgcode();
 
   // Run the startup program before the game logic loop.
   if (!configuration.startupPrg) {
@@ -221,35 +230,53 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
   return entity;
 };
 
-RPGToolkit.prototype.runProgram = function (filename, source, callback) {
-  // Provide the full path for Jailed.
-  var host = location.protocol
-          .concat("//")
-          .concat(window.location.hostname)
-          .concat(":".concat(location.port));
+RPGToolkit.prototype.openProgram = function (filename) {
+  var program = rpgtoolkit.programCache[filename];
 
-  this.rpgcodeApi.source = source; // Entity that triggered the program.
+  if (!program) {
+    // TODO: Make the changes here that chrome suggests.
+    var req = new XMLHttpRequest();
+    req.open("GET", filename, false);
+    req.overrideMimeType("text/plain; charset=x-user-defined");
+    req.send(null);
+
+    program = new Function(req.responseText);
+    rpgtoolkit.programCache[filename] = program;
+  }
+
+  return program;
+};
+
+RPGToolkit.prototype.runProgram = function (filename, source, callback) {
+  rpgcode.source = source; // Entity that triggered the program.
 
   rpgtoolkit.craftyPlayer.disableControl();
 
-  // Store runtime key handlers.
-  var keyDownHandlers = rpgtoolkit.keyboardHandler.downHandlers;
-  var keyUpHandlers = rpgtoolkit.keyboardHandler.upHandlers;
+  // Store endProgram callback and runtime key handlers.
+  rpgtoolkit.endProgramCallback = callback;
+  rpgtoolkit.keyDownHandlers = rpgtoolkit.keyboardHandler.downHandlers;
+  rpgtoolkit.keyUpHandlers = rpgtoolkit.keyboardHandler.upHandlers;
   rpgtoolkit.keyboardHandler.downHandlers = {};
   rpgtoolkit.keyboardHandler.upHandlers = {};
 
-  var program = new jailed.Plugin(host + "/" + filename, this.rpgcodeApi.api);
-  program.whenConnected(function () {
+  var program = rpgtoolkit.openProgram(filename);
+  program();
+};
 
-  });
-  program.whenDisconnected(function () {
-    if (callback) {
-      callback();
+RPGToolkit.prototype.endProgram = function (nextProgram) {
+  if (nextProgram) {
+    rpgtoolkit.runProgram(PATH_PROGRAM + nextProgram, rpgcode.source,
+            rpgtoolkit.endProgramCallback);
+  } else {
+    if (rpgtoolkit.endProgramCallback) {
+      rpgtoolkit.endProgramCallback();
+      rpgtoolkit.endProgramCallback = null;
     }
-    rpgtoolkit.keyboardHandler.downHandlers = keyDownHandlers;
-    rpgtoolkit.keyboardHandler.upHandlers = keyUpHandlers;
+
+    rpgtoolkit.keyboardHandler.downHandlers = rpgtoolkit.keyDownHandlers;
+    rpgtoolkit.keyboardHandler.upHandlers = rpgtoolkit.keyUpHandlers;
     rpgtoolkit.craftyPlayer.enableControl();
-  });
+  }
 };
 
 RPGToolkit.prototype.createSolidVector = function (x1, y1, x2, y2, layer) {

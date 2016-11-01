@@ -1,48 +1,8 @@
-/* global rpgtoolkit */
+/* global rpgtoolkit, rpgcode */
 
-function rpgcode() {
-  this.api = {
-    animateItem: this.animateItem,
-    animatePlayer: this.animatePlayer,
-    clearCanvas: this.clearCanvas,
-    clearDialog: this.clearDialog,
-    createCanvas: this.createCanvas,
-    delay: this.delay,
-    destroyCanvas: this.destroyCanvas,
-    destroyItem: this.destroyItem,
-    drawOntoCanvas: this.drawOntoCanvas,
-    drawText: this.drawText,
-    fillRect: this.fillRect,
-    getBoardName: this.getBoardName,
-    getGlobal: this.getGlobal,
-    getPlayerDirection: this.getPlayerDirection,
-    getPlayerLocation: this.getPlayerLocation,
-    getRandom: this.getRandom,
-    loadAssets: this.loadAssets,
-    log: this.log,
-    playSound: this.playSound,
-    pushItem: this.pushItem,
-    pushPlayer: this.pushPlayer,
-    registerKeyDown: this.registerKeyDown,
-    registerKeyUp: this.registerKeyUp,
-    removeAssets: this.removeAssets,
-    renderNow: this.renderNow,
-    replaceTile: this.replaceTile,
-    sendToBoard: this.sendToBoard,
-    setColor: this.setColor,
-    setGlobal: this.setGlobal,
-    setImage: this.setImage,
-    setDialogGraphics: this.setDialogGraphics,
-    setItemLocation: this.setItemLocation,
-    setItemStance: this.setItemStance,
-    setPlayerLocation: this.setPlayerLocation,
-    setPlayerStance: this.setPlayerStance,
-    showDialog: this.showDialog,
-    stopSound: this.stopSound,
-    unregisterKeyDown: this.unregisterKeyDown,
-    unregisterKeyUp: this.unregisterKeyUp
-  };
+var rpgcode = null; // Setup inside of the engine.
 
+function RPGcode() {
   this.source = {}; // The entity that triggered the program.
 
   this.canvases = {"renderNowCanvas": {
@@ -65,6 +25,38 @@ function rpgcode() {
 }
 
 /**
+ * Should not be used directly, instead see animateItem and animatePlayer.
+ * 
+ * @param {type} generic
+ * @param {type} resetGraphics
+ * @param {type} callback
+ * @returns {undefined}
+ */
+RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) {  
+  var activeGraphics = generic.graphics.active;
+  var soundEffect = activeGraphics.soundEffect;
+  var frameRate = activeGraphics.frameRate;
+  var delay = frameRate * 1000; // Get number of milliseconds.
+  var repeat = activeGraphics.frames.length - 1;
+
+  Crafty.e("Delay").delay(function () {
+    generic.animate(frameRate);
+    Crafty.trigger("Invalidate");
+  }, delay, repeat, function () {
+    generic.graphics.active = resetGraphics;
+    Crafty.trigger("Invalidate");
+
+    if (callback) {
+      callback();
+    }
+  });
+
+  if (soundEffect) {
+    rpgcode.playSound(soundEffect, false);
+  }
+};
+
+/**
  * Play the items current animation.
  * 
  * @param {type} itemId
@@ -72,35 +64,13 @@ function rpgcode() {
  * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.animateItem = function (itemId, animationId, callback) {
-  // TODO: dupping code here...
+RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
   var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
   if (entity) {
     var item = entity.sprite.item;
     var resetGraphics = item.graphics.active;
-    rpgtoolkit.rpgcodeApi.setItemStance(itemId, animationId);
-    
-    var activeGraphics = item.graphics.active;
-    var soundEffect = activeGraphics.soundEffect;
-    var frameRate = activeGraphics.frameRate;
-    var delay = frameRate * 1000; // Get number of milliseconds.
-    var repeat = activeGraphics.frames.length - 1;
-    
-    Crafty.e("Delay").delay(function() {
-      item.animate(frameRate);
-      Crafty.trigger("Invalidate");
-    }, delay, repeat, function() {
-      item.graphics.active = resetGraphics;
-      Crafty.trigger("Invalidate");
-      
-      if (callback) {
-        callback();
-      }
-    });
-    
-    if (soundEffect) {
-      rpgtoolkit.rpgcodeApi.playSound(soundEffect, false);
-    }
+    rpgcode.setItemStance(itemId, animationId);
+    rpgcode._animateGeneric(item, resetGraphics, callback);
   }
 };
 
@@ -112,33 +82,12 @@ rpgcode.prototype.animateItem = function (itemId, animationId, callback) {
  * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.animatePlayer = function (playerId, animationId, callback) {
-    // TODO: playerId will be unused until parties with multiple players 
-    // are supported.
-    var resetGraphics = rpgtoolkit.craftyPlayer.player.graphics.active;
-    rpgtoolkit.rpgcodeApi.setPlayerStance(playerId, animationId);
-    
-    var activeGraphics = rpgtoolkit.craftyPlayer.player.graphics.active;
-    var soundEffect = activeGraphics.soundEffect;
-    var frameRate = activeGraphics.frameRate;
-    var delay = frameRate * 1000; // Get number of milliseconds.
-    var repeat = activeGraphics.frames.length - 1;
-    
-    Crafty.e("Delay").delay(function() {
-      rpgtoolkit.craftyPlayer.player.animate(frameRate);
-      Crafty.trigger("Invalidate");
-    }, delay, repeat, function() {
-      rpgtoolkit.craftyPlayer.player.graphics.active = resetGraphics;
-      Crafty.trigger("Invalidate");
-      
-      if (callback) {
-        callback();
-      }
-    });
-    
-    if (soundEffect) {
-      rpgtoolkit.rpgcodeApi.playSound(soundEffect, false);
-    }
+RPGcode.prototype.animatePlayer = function (playerId, animationId, callback) {
+  // TODO: playerId will be unused until parties with multiple players are supported.
+  var player = rpgtoolkit.craftyPlayer.player;
+  var resetGraphics = player.graphics.active;
+  rpgcode.setPlayerStance(playerId, animationId);
+  rpgcode._animateGeneric(player, resetGraphics, callback);
 };
 
 /**
@@ -147,12 +96,12 @@ rpgcode.prototype.animatePlayer = function (playerId, animationId, callback) {
  * @param {type} canvasId the canvas to clear if undefined defaults to "renderNowCanas"
  * @returns {undefined}
  */
-rpgcode.prototype.clearCanvas = function (canvasId) {
+RPGcode.prototype.clearCanvas = function (canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
 
-  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  var instance = rpgcode.canvases[canvasId];
   if (instance) {
     var canvas = instance.canvas;
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
@@ -166,8 +115,7 @@ rpgcode.prototype.clearCanvas = function (canvasId) {
  * 
  * @returns {undefined}
  */
-rpgcode.prototype.clearDialog = function () {
-  var rpgcode = rpgtoolkit.rpgcodeApi;
+RPGcode.prototype.clearDialog = function () {
   rpgcode.dialogWindow.visible = false;
   rpgcode.dialogWindow.lineY = 5;
   rpgcode.clearCanvas("renderNowCanvas");
@@ -182,11 +130,11 @@ rpgcode.prototype.clearDialog = function () {
  * @param {type} canvasId a unique identifier
  * @returns {undefined}
  */
-rpgcode.prototype.createCanvas = function (width, height, canvasId) {
+RPGcode.prototype.createCanvas = function (width, height, canvasId) {
   var canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  rpgtoolkit.rpgcodeApi.canvases[canvasId] = {canvas: canvas, render: false};
+  rpgcode.canvases[canvasId] = {canvas: canvas, render: false};
 };
 
 /**
@@ -197,7 +145,7 @@ rpgcode.prototype.createCanvas = function (width, height, canvasId) {
  * @param {type} callback function to execute after the delay
  * @returns {undefined}
  */
-rpgcode.prototype.delay = function (ms, callback) {
+RPGcode.prototype.delay = function (ms, callback) {
   Crafty.e("Delay").delay(callback, ms);
 };
 
@@ -207,8 +155,8 @@ rpgcode.prototype.delay = function (ms, callback) {
  * @param {type} canvasId canvas to destroy
  * @returns {undefined}
  */
-rpgcode.prototype.destroyCanvas = function (canvasId) {
-  delete rpgtoolkit.rpgcodeApi.canvases[canvasId];
+RPGcode.prototype.destroyCanvas = function (canvasId) {
+  delete rpgcode.canvases[canvasId];
 };
 
 /**
@@ -217,7 +165,7 @@ rpgcode.prototype.destroyCanvas = function (canvasId) {
  * @param {type} itemId
  * @returns {undefined}
  */
-rpgcode.prototype.destroyItem = function (itemId) {
+RPGcode.prototype.destroyItem = function (itemId) {
   if (rpgtoolkit.craftyBoard.board.sprites[itemId]) {
     rpgtoolkit.craftyBoard.board.sprites[itemId].destroy();
     delete rpgtoolkit.craftyBoard.board.sprites[itemId];
@@ -236,9 +184,9 @@ rpgcode.prototype.destroyItem = function (itemId) {
  * @param {type} targetId
  * @returns {undefined}
  */
-rpgcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targetId) {
-  var source = rpgtoolkit.rpgcodeApi.canvases[sourceId];
-  var target = rpgtoolkit.rpgcodeApi.canvases[targetId];
+RPGcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targetId) {
+  var source = rpgcode.canvases[sourceId];
+  var target = rpgcode.canvases[targetId];
 
   if (source && target) {
     var sourceCanvas = source.canvas;
@@ -257,18 +205,31 @@ rpgcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targ
  * @param {type} canvasId
  * @returns {undefined}
  */
-rpgcode.prototype.drawText = function (x, y, text, canvasId) {
+RPGcode.prototype.drawText = function (x, y, text, canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
 
-  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  var instance = rpgcode.canvases[canvasId];
   if (instance) {
     var context = instance.canvas.getContext("2d");
-    var rgba = rpgtoolkit.rpgcodeApi.rgba;
+    var rgba = rpgcode.rgba;
     context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
-    context.font = rpgtoolkit.rpgcodeApi.font;
+    context.font = rpgcode.font;
     context.fillText(text, x, y);
+  }
+};
+
+/**
+ * 
+ * @param {type} nextProgram
+ * @returns {undefined}
+ */
+RPGcode.prototype.endProgram = function (nextProgram) {
+  if (nextProgram) {
+    rpgtoolkit.endProgram(nextProgram);
+  } else {
+    rpgtoolkit.endProgram();
   }
 };
 
@@ -282,64 +243,60 @@ rpgcode.prototype.drawText = function (x, y, text, canvasId) {
  * @param {type} canvasId canvas to draw on
  * @returns {undefined}
  */
-rpgcode.prototype.fillRect = function (x, y, width, height, canvasId) {
+RPGcode.prototype.fillRect = function (x, y, width, height, canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
 
-  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  var instance = rpgcode.canvases[canvasId];
   if (instance) {
     var context = instance.canvas.getContext("2d");
-    var rgba = rpgtoolkit.rpgcodeApi.rgba;
+    var rgba = rpgcode.rgba;
     context.fillStyle = "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," + rgba.a + ")";
     context.fillRect(x, y, width, height);
   }
 };
 
 /**
- * Gets the current board's file name and returns it to the callback function.
+ * Gets the current board's file name and returns it.
  * 
- * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.getBoardName = function(callback) {
-  if (callback) {
-    callback(rpgtoolkit.craftyBoard.board.filename);
-  }
+RPGcode.prototype.getBoardName = function () {
+  return rpgtoolkit.craftyBoard.board.filename;
 };
 
 /**
- * Gets a global variable and returns it to the callback.
+ * Gets a global variable and returns it.
  * 
  * @param {type} id variable ID
- * @param {type} callback function to invoke
  * @returns {undefined}
  */
-rpgcode.prototype.getGlobal = function (id, callback) {
-  callback(rpgtoolkit.rpgcodeApi.globals[id]);
+RPGcode.prototype.getGlobal = function (id) {
+  return rpgcode.globals[id];
 };
 
 /**
  * Gets the player's current direction and returns it to the callback.
  * 
- * @param {type} callback function to invoke
  * @returns {undefined}
  */
-rpgcode.prototype.getPlayerDirection = function (callback) {
-  callback(rpgtoolkit.craftyPlayer.player.direction);
+RPGcode.prototype.getPlayerDirection = function () {
+  return rpgtoolkit.craftyPlayer.player.direction;
 };
 
 /**
  * Gets the player's current location (in tiles) and returns it to the callback.
  * 
- * @param {type} callback function to invoke
  * @returns {undefined}
  */
-rpgcode.prototype.getPlayerLocation = function (callback) {
+RPGcode.prototype.getPlayerLocation = function () {
   var instance = rpgtoolkit.craftyPlayer;
-  callback(instance.x / rpgtoolkit.tileSize,
-          instance.y / rpgtoolkit.tileSize,
-          instance.player.layer);
+  return [
+    instance.x / rpgtoolkit.tileSize, 
+    instance.y / rpgtoolkit.tileSize, 
+    instance.player.layer
+  ];
 };
 
 /**
@@ -348,7 +305,7 @@ rpgcode.prototype.getPlayerLocation = function (callback) {
  * @param {type} max
  * @returns {undefined}
  */
-rpgcode.prototype.getRandom = function(min, max) {
+RPGcode.prototype.getRandom = function (min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
@@ -360,7 +317,7 @@ rpgcode.prototype.getRandom = function(min, max) {
  * @param {type} onLoad callback to invoke after assets are loaded
  * @returns {undefined}
  */
-rpgcode.prototype.loadAssets = function (assets, onLoad) {
+RPGcode.prototype.loadAssets = function (assets, onLoad) {
   // If the assets already exist Crafty just ignores 
   // them but still invokes the callback.
   Crafty.load(assets, onLoad);
@@ -372,7 +329,7 @@ rpgcode.prototype.loadAssets = function (assets, onLoad) {
  * @param {type} message message to log
  * @returns {undefined}
  */
-rpgcode.prototype.log = function (message) {
+RPGcode.prototype.log = function (message) {
   console.log(message);
 };
 
@@ -383,7 +340,7 @@ rpgcode.prototype.log = function (message) {
  * @param {type} loop 
  * @returns {undefined}
  */
-rpgcode.prototype.playSound = function (file, loop) {
+RPGcode.prototype.playSound = function (file, loop) {
   var count = loop ? -1 : 1;
   Crafty.audio.play(file, count);
 };
@@ -395,10 +352,10 @@ rpgcode.prototype.playSound = function (file, loop) {
  * @param {type} direction
  * @returns {undefined}
  */
-rpgcode.prototype.pushItem = function (item, direction) {
+RPGcode.prototype.pushItem = function (item, direction) {
   switch (item) {
     case "source":
-      rpgtoolkit.rpgcodeApi.source.move(direction, 8);
+      rpgcode.source.move(direction, 8);
       break;
   }
 };
@@ -409,7 +366,7 @@ rpgcode.prototype.pushItem = function (item, direction) {
  * @param {type} direction
  * @returns {undefined}
  */
-rpgcode.prototype.pushPlayer = function (direction) {
+RPGcode.prototype.pushPlayer = function (direction) {
   rpgtoolkit.craftyPlayer.move(direction, 8);
 };
 
@@ -424,7 +381,7 @@ rpgcode.prototype.pushPlayer = function (direction) {
  * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.registerKeyDown = function (key, callback) {
+RPGcode.prototype.registerKeyDown = function (key, callback) {
   rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]] = callback;
 };
 
@@ -439,7 +396,7 @@ rpgcode.prototype.registerKeyDown = function (key, callback) {
  * @param {type} callback
  * @returns {undefined}
  */
-rpgcode.prototype.registerKeyUp = function (key, callback) {
+RPGcode.prototype.registerKeyUp = function (key, callback) {
   rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]] = callback;
 };
 
@@ -449,7 +406,7 @@ rpgcode.prototype.registerKeyUp = function (key, callback) {
  * @param {type} assets
  * @returns {undefined}
  */
-rpgcode.prototype.removeAssets = function (assets) {
+RPGcode.prototype.removeAssets = function (assets) {
   Crafty.removeAssets(assets);
 };
 
@@ -459,12 +416,12 @@ rpgcode.prototype.removeAssets = function (assets) {
  * @param {type} canvasId
  * @returns {undefined}
  */
-rpgcode.prototype.renderNow = function (canvasId) {
+RPGcode.prototype.renderNow = function (canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
 
-  var canvas = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  var canvas = rpgcode.canvases[canvasId];
   if (canvas) {
     canvas.render = true;
     Crafty.trigger("Invalidate");
@@ -480,7 +437,7 @@ rpgcode.prototype.renderNow = function (canvasId) {
  * @param {type} tileName
  * @returns {undefined}
  */
-rpgcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
+RPGcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
   var index = rpgtoolkit.craftyBoard.board.tileNames.indexOf(tileName);
   if (index === -1) {
     index = rpgtoolkit.craftyBoard.board.tileNames.push(tileName);
@@ -492,6 +449,14 @@ rpgcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
 };
 
 /**
+ * 
+ * @returns {undefined}
+ */
+RPGcode.prototype.restart = function () {
+  location.reload(); // Cheap way to implement game restart for the moment.
+};
+
+/**
  * Sends the player to a board and places them at the given (x, y) position in tiles.
  * 
  * @param {type} boardName
@@ -499,7 +464,7 @@ rpgcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
  * @param {type} tileY
  * @returns {undefined}
  */
-rpgcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
+RPGcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
   rpgtoolkit.switchBoard(boardName, tileX, tileY);
 };
 
@@ -512,8 +477,8 @@ rpgcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
  * @param {type} a
  * @returns {undefined}
  */
-rpgcode.prototype.setColor = function (r, g, b, a) {
-  rpgtoolkit.rpgcodeApi.rgba = {r: r, g: g, b: b, a: a};
+RPGcode.prototype.setColor = function (r, g, b, a) {
+  rpgcode.rgba = {r: r, g: g, b: b, a: a};
 };
 
 /**
@@ -523,8 +488,8 @@ rpgcode.prototype.setColor = function (r, g, b, a) {
  * @param {type} value
  * @returns {undefined}
  */
-rpgcode.prototype.setGlobal = function (id, value) {
-  rpgtoolkit.rpgcodeApi.globals[id] = value;
+RPGcode.prototype.setGlobal = function (id, value) {
+  rpgcode.globals[id] = value;
 };
 
 /**
@@ -538,12 +503,12 @@ rpgcode.prototype.setGlobal = function (id, value) {
  * @param {type} canvasId
  * @returns {undefined}
  */
-rpgcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) {
+RPGcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) {
   if (!canvasId) {
     canvasId = "renderNowCanvas";
   }
 
-  var instance = rpgtoolkit.rpgcodeApi.canvases[canvasId];
+  var instance = rpgcode.canvases[canvasId];
   if (instance) {
     var image = Crafty.asset(Crafty.__paths.images + fileName);
     if (image) {
@@ -560,9 +525,9 @@ rpgcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) 
  * @param {type} backgroundImage
  * @returns {undefined}
  */
-rpgcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
-  rpgtoolkit.rpgcodeApi.dialogWindow.profile = profileImage;
-  rpgtoolkit.rpgcodeApi.dialogWindow.background = backgroundImage;
+RPGcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
+  rpgcode.dialogWindow.profile = profileImage;
+  rpgcode.dialogWindow.background = backgroundImage;
 };
 
 /**
@@ -574,12 +539,12 @@ rpgcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
  * @param {type} isTiles
  * @returns {undefined}
  */
-rpgcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
+RPGcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
   if (isTiles) {
     x *= rpgtoolkit.tileSize;
     y *= rpgtoolkit.tileSize;
   }
-  
+
   var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
   if (item) {
     item.x = x;
@@ -595,7 +560,7 @@ rpgcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
  * @param {type} stanceId
  * @returns {undefined}
  */
-rpgcode.prototype.setItemStance = function (itemId, stanceId) {
+RPGcode.prototype.setItemStance = function (itemId, stanceId) {
   var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
   if (entity) {
     entity.sprite.item.changeGraphics(stanceId);
@@ -612,12 +577,12 @@ rpgcode.prototype.setItemStance = function (itemId, stanceId) {
  * @param {type} isTiles
  * @returns {undefined}
  */
-rpgcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) {
+RPGcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) {
   if (isTiles) {
     x *= rpgtoolkit.tileSize;
     y *= rpgtoolkit.tileSize;
   }
-  
+
   // TODO: playerId will be unused until parties with multiple players 
   // are supported.
   rpgtoolkit.craftyPlayer.x = x;
@@ -631,7 +596,7 @@ rpgcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) 
  * @param {type} stanceId
  * @returns {undefined}
  */
-rpgcode.prototype.setPlayerStance = function (playerId, stanceId) {
+RPGcode.prototype.setPlayerStance = function (playerId, stanceId) {
   // TODO: playerId will be unused until parties with multiple players 
   // are supported.
   rpgtoolkit.craftyPlayer.player.changeGraphics(stanceId);
@@ -647,8 +612,7 @@ rpgcode.prototype.setPlayerStance = function (playerId, stanceId) {
  * @param {type} dialog
  * @returns {undefined}
  */
-rpgcode.prototype.showDialog = function (dialog) {
-  var rpgcode = rpgtoolkit.rpgcodeApi;
+RPGcode.prototype.showDialog = function (dialog) {
   var dialogWindow = rpgcode.dialogWindow;
 
   if (!dialogWindow.visible) {
@@ -670,7 +634,7 @@ rpgcode.prototype.showDialog = function (dialog) {
  * @param {type} file
  * @returns {undefined}
  */
-rpgcode.prototype.stopSound = function (file) {
+RPGcode.prototype.stopSound = function (file) {
   if (file) {
     Crafty.audio.stop(file);
   } else {
@@ -684,7 +648,7 @@ rpgcode.prototype.stopSound = function (file) {
  * @param {type} key
  * @returns {undefined}
  */
-rpgcode.prototype.unregisterKeyDown = function (key) {
+RPGcode.prototype.unregisterKeyDown = function (key) {
   delete rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]];
 };
 
@@ -694,6 +658,6 @@ rpgcode.prototype.unregisterKeyDown = function (key) {
  * @param {type} key
  * @returns {undefined}
  */
-rpgcode.prototype.unregisterKeyUp = function (key) {
+RPGcode.prototype.unregisterKeyUp = function (key) {
   delete rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]];
 };

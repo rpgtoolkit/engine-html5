@@ -1,3 +1,5 @@
+/* global rpgtoolkit, rpgcode */
+
 function screenRenderer() {
   this.renderNowCanvas = document.createElement("canvas");
   this.renderNowCanvas.width = Crafty.viewport._width;
@@ -111,7 +113,7 @@ screenRenderer.prototype.render = function (context) {
   /*
    * Render rpgcode canvases.
    */
-  var canvases = rpgtoolkit.rpgcodeApi.canvases;
+  var canvases = rpgcode.canvases;
   for (var property in canvases) {
     if (canvases.hasOwnProperty(property)) {
       var element = canvases[property];
