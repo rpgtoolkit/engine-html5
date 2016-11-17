@@ -3,7 +3,8 @@
 var rpgcode = null; // Setup inside of the engine.
 
 function RPGcode() {
-  this.source = {}; // The entity that triggered the program.
+  // The last entity to trigger a program.
+  this.source = {};
 
   this.canvases = {"renderNowCanvas": {
       canvas: rpgtoolkit.screen.renderNowCanvas,
@@ -11,6 +12,7 @@ function RPGcode() {
     }
   };
 
+  // Global variable storage for user programs.
   this.globals = {};
 
   this.rgba = {r: 255, g: 255, b: 255, a: 1.0};
@@ -27,9 +29,9 @@ function RPGcode() {
 /**
  * Should not be used directly, instead see animateItem and animatePlayer.
  * 
- * @param {type} generic
- * @param {type} resetGraphics
- * @param {type} callback
+ * @param {Object} generic - The object that supports animation.
+ * @param {Object} resetGraphics - The graphics set to return to after the animation has finished.
+ * @param {Function} callback - Invoked on animation end if defined.
  * @returns {undefined}
  */
 RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) {  
@@ -57,12 +59,12 @@ RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) 
 };
 
 /**
- * Play the items current animation.
+ * Animates the item using the requested animation. The animationId must be
+ * available for the item.
  * 
- * @param {type} itemId
- * @param {type} animationId
- * @param {type} callback
- * @returns {undefined}
+ * @param {number} itemId - The index of the item on the board to animate.
+ * @param {string} animationId - The requested animation to play for the item.
+ * @param {Function} callback - If defined, the function to invoke at the end of the animation.
  */
 RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
   var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
@@ -75,12 +77,12 @@ RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
 };
 
 /**
- * Play the players current animation.
+ * Animates the player using the requested animation. The animationId must be
+ * available for the player.
  * 
- * @param {type} playerId
- * @param {type} animationId
- * @param {type} callback
- * @returns {undefined}
+ * @param {string} playerId - The label associated with the player. 
+ * @param {string} animationId - The requested animation to player for the player.
+ * @param {Function} callback - If defined, the function to invoke at the end of the animation.
  */
 RPGcode.prototype.animatePlayer = function (playerId, animationId, callback) {
   // TODO: playerId will be unused until parties with multiple players are supported.
@@ -93,8 +95,7 @@ RPGcode.prototype.animatePlayer = function (playerId, animationId, callback) {
 /**
  * Clears an entire canvas and triggers a redraw.
  * 
- * @param {type} canvasId the canvas to clear if undefined defaults to "renderNowCanas"
- * @returns {undefined}
+ * @param {string} canvasId - The canvas to clear, if undefined defaults to "renderNowCanas".
  */
 RPGcode.prototype.clearCanvas = function (canvasId) {
   if (!canvasId) {
@@ -112,8 +113,6 @@ RPGcode.prototype.clearCanvas = function (canvasId) {
 
 /**
  * Clears and hides the dialog box.
- * 
- * @returns {undefined}
  */
 RPGcode.prototype.clearDialog = function () {
   rpgcode.dialogWindow.visible = false;
@@ -125,10 +124,9 @@ RPGcode.prototype.clearDialog = function () {
  * Creates a canvas with the specified width, height, and ID. This canvas will not
  * be drawn until renderNow is called with its ID.
  * 
- * @param {type} width in pixels
- * @param {type} height in pixels
- * @param {type} canvasId a unique identifier
- * @returns {undefined}
+ * @param {number} width - In pixels.
+ * @param {number} height - In pixels.
+ * @param {string} canvasId - The unique identifier for this canvas.
  */
 RPGcode.prototype.createCanvas = function (width, height, canvasId) {
   var canvas = document.createElement("canvas");
@@ -138,22 +136,20 @@ RPGcode.prototype.createCanvas = function (width, height, canvasId) {
 };
 
 /**
- * Delays a program for a specified number of milliseconds, after which the 
+ * Delays a programs execution for a specified number of milliseconds, after which the 
  * callback function is invoked.
  * 
- * @param {type} ms time to wait in milliseconds
- * @param {type} callback function to execute after the delay
- * @returns {undefined}
+ * @param {number} ms - Time to wait in milliseconds.
+ * @param {Function} callback - Function to execute after the delay.
  */
 RPGcode.prototype.delay = function (ms, callback) {
   Crafty.e("Delay").delay(callback, ms);
 };
 
 /**
- * Destroys the canvas.
+ * Destroys the canvas with the specified ID.
  * 
- * @param {type} canvasId canvas to destroy
- * @returns {undefined}
+ * @param {string} canvasId - The ID for the canvas to destroy.
  */
 RPGcode.prototype.destroyCanvas = function (canvasId) {
   delete rpgcode.canvases[canvasId];
@@ -162,8 +158,7 @@ RPGcode.prototype.destroyCanvas = function (canvasId) {
 /**
  * Destroys a particular item instance and removes it from play.
  * 
- * @param {type} itemId
- * @returns {undefined}
+ * @param {number} itemId - The index of the item on the board to animate.
  */
 RPGcode.prototype.destroyItem = function (itemId) {
   if (rpgtoolkit.craftyBoard.board.sprites[itemId]) {
@@ -174,15 +169,14 @@ RPGcode.prototype.destroyItem = function (itemId) {
 };
 
 /**
+ * Draws the source canvas onto the target canvas.
  * 
- * 
- * @param {type} sourceId
- * @param {type} x
- * @param {type} y
- * @param {type} width
- * @param {type} height
- * @param {type} targetId
- * @returns {undefined}
+ * @param {string} sourceId - The ID of the source canvas.
+ * @param {number} x - The start position x in pixels.
+ * @param {number} y - The start position y in pixels.
+ * @param {number} width - In pixels.
+ * @param {number} height - In pixels.
+ * @param {string} targetId - The ID of the target canvas.
  */
 RPGcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targetId) {
   var source = rpgcode.canvases[sourceId];
@@ -196,14 +190,14 @@ RPGcode.prototype.drawOntoCanvas = function (sourceId, x, y, width, height, targ
 };
 
 /**
- * Draws the text on the canvas startig at the specified (x, y) position, if no 
+ * Draws the text on the canvas starting at the specified (x, y) position, if no 
  * canvas is specified it defaults to the "renderNowCanvas".
  * 
- * @param {type} x
- * @param {type} y
- * @param {type} text
- * @param {type} canvasId
- * @returns {undefined}
+ * @param {number} x - The start position x in pixels.
+ * @param {number} y - The start postion y in pixels.
+ * @param {string} text - A string of text to draw.
+ * @param {string} canvasId - The ID of the canvas to draw onto, if undefined 
+ *                          defaults to "renderNowCanvas".
  */
 RPGcode.prototype.drawText = function (x, y, text, canvasId) {
   if (!canvasId) {
@@ -221,9 +215,11 @@ RPGcode.prototype.drawText = function (x, y, text, canvasId) {
 };
 
 /**
+ * Ends the current program and releases control back to the main game loop. If nextProgram is
+ * specified the main loop will not resume. Execution will be immediately passed to the program
+ * the user specified.
  * 
- * @param {type} nextProgram
- * @returns {undefined}
+ * @param {string} nextProgram - The relative path to the next program to execute.
  */
 RPGcode.prototype.endProgram = function (nextProgram) {
   if (nextProgram) {
@@ -236,12 +232,12 @@ RPGcode.prototype.endProgram = function (nextProgram) {
 /**
  * Fills a solid rectangle on the canvas.
  * 
- * @param {type} x start x postion
- * @param {type} y start y postion
- * @param {type} width 
- * @param {type} height
- * @param {type} canvasId canvas to draw on
- * @returns {undefined}
+ * @param {number} x - The start x postion.
+ * @param {number} y - The start y postion.
+ * @param {number} width - In pixels.
+ * @param {number} height - In pixels.
+ * @param {string} canvasId - The ID of the canvas to draw on, defaults to "renderNowCanvas" 
+ * if none specified.
  */
 RPGcode.prototype.fillRect = function (x, y, width, height, canvasId) {
   if (!canvasId) {
@@ -260,35 +256,35 @@ RPGcode.prototype.fillRect = function (x, y, width, height, canvasId) {
 /**
  * Gets the current board's file name and returns it.
  * 
- * @returns {undefined}
+ * @returns {string}
  */
 RPGcode.prototype.getBoardName = function () {
   return rpgtoolkit.craftyBoard.board.filename;
 };
 
 /**
- * Gets a global variable and returns it.
+ * Gets the value of global variable.
  * 
- * @param {type} id variable ID
- * @returns {undefined}
+ * @param {string} id -  The ID associated with the global variable.
+ * @returns {Object}
  */
 RPGcode.prototype.getGlobal = function (id) {
   return rpgcode.globals[id];
 };
 
 /**
- * Gets the player's current direction and returns it to the callback.
+ * Gets the player's current direction.
  * 
- * @returns {undefined}
+ * @returns {string}
  */
 RPGcode.prototype.getPlayerDirection = function () {
   return rpgtoolkit.craftyPlayer.player.direction;
 };
 
 /**
- * Gets the player's current location (in tiles) and returns it to the callback.
+ * Gets the player's current location (in tiles).
  * 
- * @returns {undefined}
+ * @returns {array[x, y, z]}
  */
 RPGcode.prototype.getPlayerLocation = function () {
   var instance = rpgtoolkit.craftyPlayer;
@@ -300,10 +296,11 @@ RPGcode.prototype.getPlayerLocation = function () {
 };
 
 /**
+ * Gets a random number between the min and max inclusive.
  * 
- * @param {type} min
- * @param {type} max
- * @returns {undefined}
+ * @param {number} min - Minimum value for the random number.
+ * @param {number} max - Maximum value for the random number.
+ * @returns {number}
  */
 RPGcode.prototype.getRandom = function (min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -313,9 +310,8 @@ RPGcode.prototype.getRandom = function (min, max) {
  * Loads the requested assets into the engine, when all of the assets have been loaded
  * the onLoad callback is invoked.
  * 
- * @param {type} assets 
- * @param {type} onLoad callback to invoke after assets are loaded
- * @returns {undefined}
+ * @param {Object} assets - Object of assets to load.
+ * @param {Function} onLoad - Callback to invoke after assets are loaded.
  */
 RPGcode.prototype.loadAssets = function (assets, onLoad) {
   // If the assets already exist Crafty just ignores 
@@ -326,8 +322,7 @@ RPGcode.prototype.loadAssets = function (assets, onLoad) {
 /**
  * Log a message to the console.
  * 
- * @param {type} message message to log
- * @returns {undefined}
+ * @param {string} message - Message to log.
  */
 RPGcode.prototype.log = function (message) {
   console.log(message);
@@ -336,9 +331,8 @@ RPGcode.prototype.log = function (message) {
 /**
  * Plays the supplied sound file, up to five sound channels can be active at once. 
  * 
- * @param {type} file 
- * @param {type} loop 
- * @returns {undefined}
+ * @param {string} file - Relative path to the sound file to play.
+ * @param {boolean} loop - Should it loop indefinitely?
  */
 RPGcode.prototype.playSound = function (file, loop) {
   var count = loop ? -1 : 1;
@@ -348,9 +342,8 @@ RPGcode.prototype.playSound = function (file, loop) {
 /**
  * Pushs the item by 8 pixels in the given direction.
  * 
- * @param {type} item
- * @param {type} direction
- * @returns {undefined}
+ * @param {number} item - The index of item on the board to push.
+ * @param {string} direction - The direction to push the item in.
  */
 RPGcode.prototype.pushItem = function (item, direction) {
   switch (item) {
@@ -363,8 +356,7 @@ RPGcode.prototype.pushItem = function (item, direction) {
 /**
  * Pushs the player by 8 pixels in the given direction.
  * 
- * @param {type} direction
- * @returns {undefined}
+ * @param {string} direction - The direction to push the player in.
  */
 RPGcode.prototype.pushPlayer = function (direction) {
   rpgtoolkit.craftyPlayer.move(direction, 8);
@@ -377,9 +369,8 @@ RPGcode.prototype.pushPlayer = function (direction) {
  * The callback function will continue to be invoked for every keyDown event until it
  * is unregistered.
  * 
- * @param {type} key
- * @param {type} callback
- * @returns {undefined}
+ * @param {string} key - The key to listen to.
+ * @param {Function} callback - The callback function to invoke when the keyDown event fires.
  */
 RPGcode.prototype.registerKeyDown = function (key, callback) {
   rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]] = callback;
@@ -392,19 +383,17 @@ RPGcode.prototype.registerKeyDown = function (key, callback) {
  * The callback function will continue to be invoked for every keyUp event until it
  * is unregistered.
  * 
- * @param {type} key
- * @param {type} callback
- * @returns {undefined}
+ * @param {string} key - The key to listen to.
+ * @param {Function} callback - The callback function to invoke when the keyUp event fires.
  */
 RPGcode.prototype.registerKeyUp = function (key, callback) {
   rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]] = callback;
 };
 
 /**
- * Removes assets from the engine.
+ * Removes assets from the engine and frees up the memory allocated to them.
  * 
- * @param {type} assets
- * @returns {undefined}
+ * @param {Object} assets - The object containing the assets identifiers.
  */
 RPGcode.prototype.removeAssets = function (assets) {
   Crafty.removeAssets(assets);
@@ -413,8 +402,7 @@ RPGcode.prototype.removeAssets = function (assets) {
 /**
  * Renders the specified canvas, if none then the "renderNowCanvas" is shown.
  * 
- * @param {type} canvasId
- * @returns {undefined}
+ * @param {string} canvasId - The ID of the canvas to render.
  */
 RPGcode.prototype.renderNow = function (canvasId) {
   if (!canvasId) {
@@ -431,11 +419,10 @@ RPGcode.prototype.renderNow = function (canvasId) {
 /**
  * Replaces a tile at the supplied (x, y, z) position.
  * 
- * @param {type} tileX
- * @param {type} tileY
- * @param {type} layer
- * @param {type} tileName
- * @returns {undefined}
+ * @param {number} tileX - The x position in tiles.
+ * @param {number} tileY - The y postion in tiles.
+ * @param {number} layer - The layer the tile is on.
+ * @param {string} tileName - The name of the tile to replace with.
  */
 RPGcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
   var index = rpgtoolkit.craftyBoard.board.tileNames.indexOf(tileName);
@@ -449,8 +436,7 @@ RPGcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
 };
 
 /**
- * 
- * @returns {undefined}
+ * Restarts the game.
  */
 RPGcode.prototype.restart = function () {
   location.reload(); // Cheap way to implement game restart for the moment.
@@ -459,10 +445,9 @@ RPGcode.prototype.restart = function () {
 /**
  * Sends the player to a board and places them at the given (x, y) position in tiles.
  * 
- * @param {type} boardName
- * @param {type} tileX
- * @param {type} tileY
- * @returns {undefined}
+ * @param {string} boardName - The board to send the player to.
+ * @param {number} tileX - The x position to place the player at, in tiles.
+ * @param {number} tileY - The y position to place the player at, in tiles.
  */
 RPGcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
   rpgtoolkit.switchBoard(boardName, tileX, tileY);
@@ -471,11 +456,10 @@ RPGcode.prototype.sendToBoard = function (boardName, tileX, tileY) {
 /**
  * Sets the RGBA color for all drawing operations to use.
  * 
- * @param {type} r
- * @param {type} g
- * @param {type} b
- * @param {type} a
- * @returns {undefined}
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @param {number} a
  */
 RPGcode.prototype.setColor = function (r, g, b, a) {
   rpgcode.rgba = {r: r, g: g, b: b, a: a};
@@ -484,9 +468,8 @@ RPGcode.prototype.setColor = function (r, g, b, a) {
 /**
  * Sets a global value in the engine, if it doesn't exist it is created.
  * 
- * @param {type} id
- * @param {type} value
- * @returns {undefined}
+ * @param {string} id - The ID to use for this global.
+ * @param {Object} value - The value this global holds.
  */
 RPGcode.prototype.setGlobal = function (id, value) {
   rpgcode.globals[id] = value;
@@ -495,13 +478,12 @@ RPGcode.prototype.setGlobal = function (id, value) {
 /**
  * Sets an image on the canvas.
  * 
- * @param {type} fileName
- * @param {type} x
- * @param {type} y
- * @param {type} width
- * @param {type} height
- * @param {type} canvasId
- * @returns {undefined}
+ * @param {string} fileName - The relative path to the image.
+ * @param {number} x - The start position x in pixels.
+ * @param {number} y - The start position y in pixels.
+ * @param {number} width - In pixels.
+ * @param {number} height - In pixels.
+ * @param {string} canvasId - The ID of the canvas to put the image on.
  */
 RPGcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) {
   if (!canvasId) {
@@ -521,9 +503,8 @@ RPGcode.prototype.setImage = function (fileName, x, y, width, height, canvasId) 
 /**
  * Sets the dialog box's speaker profile image and the background image.
  * 
- * @param {type} profileImage
- * @param {type} backgroundImage
- * @returns {undefined}
+ * @param {string} profileImage - The relative path to the profile image.
+ * @param {string} backgroundImage - The relative path to the background image.
  */
 RPGcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
   rpgcode.dialogWindow.profile = profileImage;
@@ -531,13 +512,13 @@ RPGcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
 };
 
 /**
+ * Sets the location of the item.
  * 
- * @param {type} itemId
- * @param {type} x
- * @param {type} y
- * @param {type} layer
- * @param {type} isTiles
- * @returns {undefined}
+ * @param {number} itemId - The index of the item on the board to move.
+ * @param {number} x - In pixels by default.
+ * @param {number} y - In pixels by default.
+ * @param {number} layer - Target layer to put the item on.
+ * @param {boolean} isTiles - Is (x, y) in tile coordinates, defaults to pixels.
  */
 RPGcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
   if (isTiles) {
@@ -555,10 +536,10 @@ RPGcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
 };
 
 /**
+ * Sets the item's current stance, uses the first frame in the animation.
  * 
- * @param {type} itemId
- * @param {type} stanceId
- * @returns {undefined}
+ * @param {number} itemId - The index of the item on the board.
+ * @param {string} stanceId - The stanceId (animationId) to use.
  */
 RPGcode.prototype.setItemStance = function (itemId, stanceId) {
   var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
@@ -568,14 +549,13 @@ RPGcode.prototype.setItemStance = function (itemId, stanceId) {
 };
 
 /**
- * Sets the players location without triggering any animation.
+ * Sets the player's location without triggering any animation.
  * 
- * @param {type} playerId
- * @param {type} x
- * @param {type} y
- * @param {type} layer
- * @param {type} isTiles
- * @returns {undefined}
+ * @param {string} playerId - The identifier associated with player to move.
+ * @param {number} x - In pixels by default.
+ * @param {number} y - In pixels by default.
+ * @param {number} layer - Target layer to put the item on.
+ * @param {boolean} isTiles - Is (x, y) in tile coordinates, defaults to pixels.
  */
 RPGcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) {
   if (isTiles) {
@@ -591,10 +571,10 @@ RPGcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) 
 };
 
 /**
+ * Sets the player's current stance, uses the first frame in the animation.
  * 
- * @param {type} playerId
- * @param {type} stanceId
- * @returns {undefined}
+ * @param {string} playerId - The index of the item on the board.
+ * @param {string} stanceId - The stanceId (animationId) to use.
  */
 RPGcode.prototype.setPlayerStance = function (playerId, stanceId) {
   // TODO: playerId will be unused until parties with multiple players 
@@ -605,12 +585,11 @@ RPGcode.prototype.setPlayerStance = function (playerId, stanceId) {
 
 /**
  * Shows the dialog window and adds the dialog to it if it is already 
- * visible the dialog is just appended.
+ * visible the dialog is just appended to the current window.
  * 
  * Note the dialog window is drawn on the default "renderNowCanvas".
  * 
- * @param {type} dialog
- * @returns {undefined}
+ * @param {string} dialog - The dialog to output.
  */
 RPGcode.prototype.showDialog = function (dialog) {
   var dialogWindow = rpgcode.dialogWindow;
@@ -631,8 +610,7 @@ RPGcode.prototype.showDialog = function (dialog) {
  * Stop playing a specific sound file, if no file is set stop
  * all sounds.
  * 
- * @param {type} file
- * @returns {undefined}
+ * @param {string} file - The relative path of the sound file to stop.
  */
 RPGcode.prototype.stopSound = function (file) {
   if (file) {
@@ -645,8 +623,7 @@ RPGcode.prototype.stopSound = function (file) {
 /**
  * Removes a previously registered keyDown listener.
  * 
- * @param {type} key
- * @returns {undefined}
+ * @param {string} key - The key associated with the listener.
  */
 RPGcode.prototype.unregisterKeyDown = function (key) {
   delete rpgtoolkit.keyboardHandler.downHandlers[Crafty.keys[key]];
@@ -655,8 +632,7 @@ RPGcode.prototype.unregisterKeyDown = function (key) {
 /**
  * Removes a previously registered keyUp listener.
  * 
- * @param {type} key
- * @returns {undefined}
+ * @param {string} key - The key associated with the listener.
  */
 RPGcode.prototype.unregisterKeyUp = function (key) {
   delete rpgtoolkit.keyboardHandler.upHandlers[Crafty.keys[key]];

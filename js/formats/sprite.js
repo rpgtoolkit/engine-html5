@@ -4,7 +4,7 @@ function Sprite() {
 
 }
 
-Sprite.prototype.DirectionEnum = {
+Sprite.prototype.StanceEnum = {
   NORTH: "n",
   SOUTH: "s",
   EAST: "e",
@@ -105,28 +105,28 @@ Sprite.prototype.changeGraphics = function (direction) {
   this.graphics.frameIndex = 0;
 
   switch (direction) {
-    case this.DirectionEnum.NORTH:
+    case this.StanceEnum.NORTH:
       this.graphics.active = this.graphics.north;
       break;
-    case this.DirectionEnum.SOUTH:
+    case this.StanceEnum.SOUTH:
       this.graphics.active = this.graphics.south;
       break;
-    case this.DirectionEnum.EAST:
+    case this.StanceEnum.EAST:
       this.graphics.active = this.graphics.east;
       break;
-    case this.DirectionEnum.WEST:
+    case this.StanceEnum.WEST:
       this.graphics.active = this.graphics.west;
       break;
-    case this.DirectionEnum.NORTH_EAST:
+    case this.StanceEnum.NORTH_EAST:
       this.graphics.active = this.grapics.northEast;
       break;
-    case this.DirectionEnum.NORTH_WEST:
+    case this.StanceEnum.NORTH_WEST:
       this.graphics.active = this.graphics.northWest;
       break;
-    case this.DirectionEnum.SOUTH_EAST:
+    case this.StanceEnum.SOUTH_EAST:
       this.graphics.active = this.graphics.southEast;
       break;
-    case this.DirectionEnum.SOUTH_WEST:
+    case this.StanceEnum.SOUTH_WEST:
       this.graphics.active = this.graphics.southWest;
       break;
     default:
@@ -157,4 +157,3 @@ Sprite.prototype.checkCollisions = function (collision, entity) {
       break;
   }
 };
-
