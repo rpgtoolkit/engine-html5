@@ -1,10 +1,41 @@
-/* global rpgtoolkit, PATH_PROGRAM */
+/* global rpgtoolkit, PATH_ANIMATION, PATH_PROGRAM */
 
 function Sprite() {
-
+  this.x = 0;
+  this.y = 0;
+  this.layer = 0;
+  this.graphics = {
+    elapsed: 0,
+    frameIndex: 0,
+    active: {},
+    south: null,
+    north: null,
+    east: null,
+    west: null,
+    southEast: null,
+    southWest: null,
+    northEast: null,
+    northWest: null,
+    southIdle: null,
+    northIdle: null,
+    eastIdle: null,
+    westIdle: null,
+    southEastIdle: null,
+    southWestIdle: null,
+    northEastIdle: null,
+    northWestIdle: null,
+    attack: null,
+    defend: null,
+    specialMove: null,
+    die: null,
+    rest: null,
+    custom: {
+      
+    }
+  };
 }
 
-Sprite.prototype.StanceEnum = {
+Sprite.prototype.DirectionEnum = {
   NORTH: "n",
   SOUTH: "s",
   EAST: "e",
@@ -16,7 +47,7 @@ Sprite.prototype.StanceEnum = {
 };
 
 Sprite.prototype.load = function () {
-  var frames = this.loadFrames();
+  var frames = this.loadAnimations();
   var soundEffects = this.loadSoundEffects();
   this.loadAssets(frames, soundEffects);
   
@@ -42,6 +73,58 @@ Sprite.prototype.loadAssets = function (frames, soundEffects) {
             // uh oh, error loading
             console.error("failed to load assets=[" + assets + "] for entity=[" + entity + "].");
           });
+};
+
+Sprite.prototype.loadAnimations = function () {
+  // Load up the standard animations.
+  this.graphics.south = this._loadAnimation(this.standardGraphics[0]);
+  this.graphics.north = this._loadAnimation(this.standardGraphics[1]);
+  this.graphics.east = this._loadAnimation(this.standardGraphics[2]);
+  this.graphics.west = this._loadAnimation(this.standardGraphics[3]);
+  this.graphics.northEast = this._loadAnimation(this.standardGraphics[4]);
+  this.graphics.northWest = this._loadAnimation(this.standardGraphics[5]);
+  this.graphics.southEast = this._loadAnimation(this.standardGraphics[6]);
+  this.graphics.southWest = this._loadAnimation(this.standardGraphics[7]);
+  this.graphics.attack = this._loadAnimation(this.standardGraphics[8]);
+  this.graphics.defend = this._loadAnimation(this.standardGraphics[9]);
+  this.graphics.specialMove = this._loadAnimation(this.standardGraphics[10]);
+  this.graphics.die = this._loadAnimation(this.standardGraphics[11]);
+  this.graphics.rest = this._loadAnimation(this.standardGraphics[12]);
+  
+  // Load up the idle animations.
+  this.graphics.southIdle = this._loadAnimation(this.standingGraphics[0]);
+  this.graphics.northIdle = this._loadAnimation(this.standingGraphics[1]);
+  this.graphics.eastIdle = this._loadAnimation(this.standingGraphics[2]);
+  this.graphics.westIdle = this._loadAnimation(this.standingGraphics[3]);
+  this.graphics.northEastIdle = this._loadAnimation(this.standingGraphics[4]);
+  this.graphics.northWestIdle = this._loadAnimation(this.standingGraphics[5]);
+  this.graphics.southEastIdle = this._loadAnimation(this.standingGraphics[6]);
+  this.graphics.southWestIdle = this._loadAnimation(this.standingGraphics[7]);
+  
+  // Load up the custom graphics.
+  var len = this.customGraphicsNames.length;
+  for (var i = 0; i < len; i++) {
+    var customGraphicName = this.customGraphicsNames[i];
+    var customGraphic = this.customGraphics[i];
+    this.graphics.custom[customGraphicName] = this._loadAnimation(customGraphic);
+  }
+  
+  return this.loadFrames();
+};
+
+Sprite.prototype._loadAnimation = function(fileName) {
+  if (fileName) {
+    var animation = new Animation(PATH_ANIMATION + fileName);
+    animation.boundingBox = {
+      x: 0,
+      y: 0,
+      width: 30,
+      height: 15
+    };
+    return animation;
+  } else {
+    return null;
+  }
 };
 
 Sprite.prototype.loadFrames = function () {
@@ -105,28 +188,28 @@ Sprite.prototype.changeGraphics = function (direction) {
   this.graphics.frameIndex = 0;
 
   switch (direction) {
-    case this.StanceEnum.NORTH:
+    case this.DirectionEnum.NORTH:
       this.graphics.active = this.graphics.north;
       break;
-    case this.StanceEnum.SOUTH:
+    case this.DirectionEnum.SOUTH:
       this.graphics.active = this.graphics.south;
       break;
-    case this.StanceEnum.EAST:
+    case this.DirectionEnum.EAST:
       this.graphics.active = this.graphics.east;
       break;
-    case this.StanceEnum.WEST:
+    case this.DirectionEnum.WEST:
       this.graphics.active = this.graphics.west;
       break;
-    case this.StanceEnum.NORTH_EAST:
+    case this.DirectionEnum.NORTH_EAST:
       this.graphics.active = this.grapics.northEast;
       break;
-    case this.StanceEnum.NORTH_WEST:
+    case this.DirectionEnum.NORTH_WEST:
       this.graphics.active = this.graphics.northWest;
       break;
-    case this.StanceEnum.SOUTH_EAST:
+    case this.DirectionEnum.SOUTH_EAST:
       this.graphics.active = this.graphics.southEast;
       break;
-    case this.StanceEnum.SOUTH_WEST:
+    case this.DirectionEnum.SOUTH_WEST:
       this.graphics.active = this.graphics.southWest;
       break;
     default:

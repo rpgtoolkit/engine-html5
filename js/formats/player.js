@@ -9,6 +9,14 @@ function Player(filename) {
   req.send(null);
 
   var player = JSON.parse(req.responseText);
+  
+  player.x = this.x;
+  player.y = this.y;
+  player.layer = this.layer;
+  player.graphics = this.graphics;
+  
+  player.loadAnimations = this.loadAnimations;
+  player._loadAnimation = this._loadAnimation;
 
   player.DirectionEnum = this.DirectionEnum;
   player.changeGraphics = this.changeGraphics;

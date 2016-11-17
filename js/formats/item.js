@@ -10,6 +10,14 @@ function Item(filename) {
   
   var item  = JSON.parse(req.responseText);
   
+  item.x = this.x;
+  item.y = this.y;
+  item.layer = this.layer;
+  item.graphics = this.graphics;
+  
+  item.loadAnimations = this.loadAnimations;
+  item._loadAnimation = this._loadAnimation;
+  
   item.DirectionEnum = this.DirectionEnum;
   item.changeGraphics = this.changeGraphics;
   item.animate = this.animate;
