@@ -1,4 +1,59 @@
-/nbproject/
-/game/
-/main/
-/profiles/
+# Compiled Source #
+###################
+*.class
+
+# Package Files #
+#################
+*.jar
+*.war
+*.ear
+
+# Testing Folders #
+###################
+#main/
+#game/
+#/dist/
+/nbproject/private/
+*/nbproject/
+/manifest.mf
+/build.xml
+/build/
+/nbdist/
+
+# Gradle        #
+#################
+
+.gradle/
+build/
+out/
+/.nb-gradle/private/
+/.nb-gradle/
+/common/target/
+/editor/target/
+/deps/target/
+/editor/nbactions.xml
+**/nb-configuration.xml
+/target/
+
+# Maven #
+#########
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Log Files  #
+##############
+*.log
+
+# Engine zip #
+##############
+engine-html5.zip
