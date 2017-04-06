@@ -1,19 +1,40 @@
 <html>
-  <head>
-    <title>tilesetRenderer-test</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- I/O Libraries -->
-    <script src="../js/io/binaryIO.js"></script>
-    <script src="../js/formats/tileset.js"></script>
-    <script src="../js/renderers/tilesetRenderer.js"></script>
-  </head>
-  <body>
-    <script>
-      var renderer = new tilesetRenderer(
-              new tileset("../game/TheWizardsTower-JS/Tiles/tileset1.tst"));
-      document.body.appendChild(renderer.render());
-    </script>
-  </body>
+    <head>
+        <title>tilesetRenderer-test</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- TODO Replace with minified version when production ready. -->
+        <script src="../js/lib/crafty0.7.1.js"></script>
+
+        <!-- I/O Libraries -->
+        <script src="../js/formats/tileset.js"></script>
+        <script src="../js/renderers/tilesetRenderer.js"></script>
+
+        <!-- Import the engine game logic. -->
+        <script src="../js/engine.js"></script>
+    </head>
+    <body>
+        <script>
+            var tileSet = new Tileset("tileset1.tileset");
+            var assets = {"images": tileSet.images};
+            console.log(assets);
+            Crafty.load(assets, // WE KEEP RESETTING THE CALLBACKS HERE!!! FIX IT!!!
+                    function () {
+                        // loaded
+                        console.log("loaded");
+                        console.log(Crafty.assets);
+                        tileSet.load();
+                        var renderer = new TilesetRenderer(tileSet);
+                        document.body.appendChild(renderer.render());
+                    },
+                    function (e) {
+                        // progress
+                    },
+                    function (e) {
+                        // uh oh, error loading
+                    }
+            );
+        </script>
+    </body>
 </html>

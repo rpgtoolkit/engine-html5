@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>tilesetRenderer-test</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- I/O Libraries -->
+        <script src="../js/io/binaryIO.js"></script>
+        <script src="../js/formats/tileset.js"></script>
+        <script src="../js/renderers/tilesetRenderer.js"></script>
+
+        <!-- Import the engine game logic. -->
+        <script src="../js/engine.js"></script>
+    </head>
+    <body>
+        <script>
+            var renderer = new tilesetRenderer(new tileset("tileset1.tileset"));
+            document.body.appendChild(renderer.render());
+        </script>
+    </body>
+</html>
