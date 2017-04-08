@@ -67,6 +67,7 @@ RPGToolkit.prototype.setup = function (filename) {
     this.craftyCharacter.x = this.craftyCharacter.character.x;
     this.craftyCharacter.y = this.craftyCharacter.character.y;
     Crafty.viewport.follow(this.craftyCharacter, 0, 0);
+    this.craftyCharacter.disableControl();
 
     this.loadCraftyAssets(this.loadScene);
 };
@@ -83,9 +84,11 @@ RPGToolkit.prototype.loadScene = function (e) {
         if (rpgtoolkit.project.startupProgram) {
             rpgtoolkit.runProgram(PATH_PROGRAM + rpgtoolkit.project.startupProgram, {}, function () {
                 Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
+                rpgtoolkit.craftyCharacter.enableControl();
             });
         } else {
             Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
+            rpgtoolkit.craftyCharacter.enableControl();
         }
     }
 };
@@ -225,9 +228,9 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
     this.craftyCharacter.x = tileX * this.tileSize;
     this.craftyCharacter.y = tileY * this.tileSize;
 
-    this.loadBoard(new board(PATH_BOARD + boardName));
-
-    this.craftyCharacter.enableControl();
+    this.loadBoard(new Board(PATH_BOARD + boardName));
+    
+    this.loadCraftyAssets(this.loadScene);
 };
 
 RPGToolkit.prototype.loadCharacter = function (character) {
@@ -281,7 +284,8 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
         w: this.tileSize,
         h: this.tileSize,
         vectorType: "item",
-        sprite: sprite
+        sprite: sprite,
+        events: sprite.events
     };
     var entity = Crafty.e("2D, Solid, Collision")
             .attr(attr)
