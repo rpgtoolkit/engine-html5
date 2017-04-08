@@ -23,12 +23,7 @@ TilesetRenderer.prototype.render = function (cnv) {
   // render each tile
   for (var i = 0; i < this.tileSet.count; i++) {
     this.renderTile(context, i, offset.x, offset.y);
-
-    offset.x += rpgtoolkit.tileSize;
-    if ((offset.x + rpgtoolkit.tileSize) > this.size.x) {
-      offset.x = 0;
-      offset.y += rpgtoolkit.tileSize;
-    }
+    offset.x += this.tileSet.tileWidth;
   }
 
   return cnv;

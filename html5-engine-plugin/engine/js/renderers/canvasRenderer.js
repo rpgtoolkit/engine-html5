@@ -1,10 +1,10 @@
-function canvasRenderer() {
+function CanvasRenderer() {
   this.renderNowCanvas = document.createElement("canvas");
   this.renderNowCanvas.width = Crafty.viewport._width;
   this.renderNowCanvas.height = Crafty.viewport._height;
 }
 
-canvasRenderer.prototype.render = function (context) {
+CanvasRenderer.prototype.render = function (context) {
   var x = -Crafty.viewport._x;
   var y = -Crafty.viewport._y;
   

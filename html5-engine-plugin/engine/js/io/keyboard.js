@@ -1,4 +1,4 @@
-function keyboard() {
+function Keyboard() {
   this.downHandlers = {};
   this.upHandlers = {};
   this.entity = Crafty.e()

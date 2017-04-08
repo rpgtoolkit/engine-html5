@@ -4,7 +4,7 @@ function Sprite() {
   this.x = 0;
   this.y = 0;
   this.layer = 0;
-  this.graphics = {
+  this.spriteGraphics = {
     elapsed: 0,
     frameIndex: 0,
     active: {},
@@ -49,64 +49,56 @@ Sprite.prototype.DirectionEnum = {
 Sprite.prototype.load = function () {
   var frames = this.loadAnimations();
   var soundEffects = this.loadSoundEffects();
-  this.loadAssets(frames, soundEffects);
   
-  // TODO: Remove this when assest loading callbacks are implemented correctly.
-  this.setReady();
-};
-
-Sprite.prototype.loadAssets = function (frames, soundEffects) {
-  var entity = this;
-  var assets = {"images": frames, "audio": soundEffects};
-  console.log(assets);
-  Crafty.load(assets, // WE KEEP RESETTING THE CALLBACKS HERE!!! FIX IT!!!
-          function () {
-            // loaded
-            console.log("loaded assets=[" + assets + "] for entity=[" + entity.toString() + "].");
-            entity.setReady();
-          },
-          function (e) {
-            // progress
-            console.log("loading assets=[" + assets + "] for entity=[" + entity + "].");
-          },
-          function (e) {
-            // uh oh, error loading
-            console.error("failed to load assets=[" + assets + "] for entity=[" + entity + "].");
-          });
+  // Return the assets that need to be loaded.
+  return {"images": frames, "audio": soundEffects};
 };
 
 Sprite.prototype.loadAnimations = function () {
   // Load up the standard animations.
-  this.graphics.south = this._loadAnimation(this.standardGraphics[0]);
-  this.graphics.north = this._loadAnimation(this.standardGraphics[1]);
-  this.graphics.east = this._loadAnimation(this.standardGraphics[2]);
-  this.graphics.west = this._loadAnimation(this.standardGraphics[3]);
-  this.graphics.northEast = this._loadAnimation(this.standardGraphics[4]);
-  this.graphics.northWest = this._loadAnimation(this.standardGraphics[5]);
-  this.graphics.southEast = this._loadAnimation(this.standardGraphics[6]);
-  this.graphics.southWest = this._loadAnimation(this.standardGraphics[7]);
-  this.graphics.attack = this._loadAnimation(this.standardGraphics[8]);
-  this.graphics.defend = this._loadAnimation(this.standardGraphics[9]);
-  this.graphics.specialMove = this._loadAnimation(this.standardGraphics[10]);
-  this.graphics.die = this._loadAnimation(this.standardGraphics[11]);
-  this.graphics.rest = this._loadAnimation(this.standardGraphics[12]);
+  var standardKeys = ["SOUTH", "NORTH", "EAST", "WEST", "NORTH_EAST", "NORTH_WEST", 
+      "SOUTH_EAST", "SOUTH_WEST", "ATTACK", "DEFEND", "SPECIAL_MOVE", "DIE", 
+      "REST", "SOUTH_IDLE", "NORTH_IDLE", "EAST_IDLE", "WEST_IDLE", 
+      "NORTH_EAST_IDLE", "NORTH_WEST_IDLE", "SOUTH_EAST_IDLE", "SOUTH_WEST_IDLE"];
+  
+  this.spriteGraphics.south = this._loadAnimation(this.animations[standardKeys[0]]);
+  this.spriteGraphics.north = this._loadAnimation(this.animations[standardKeys[1]]);
+  this.spriteGraphics.east = this._loadAnimation(this.animations[standardKeys[2]]);
+  this.spriteGraphics.west = this._loadAnimation(this.animations[standardKeys[3]]);
+  this.spriteGraphics.northEast = this._loadAnimation(this.animations[standardKeys[4]]);
+  this.spriteGraphics.northWest = this._loadAnimation(this.animations[standardKeys[5]]);
+  this.spriteGraphics.southEast = this._loadAnimation(this.animations[standardKeys[6]]);
+  this.spriteGraphics.southWest = this._loadAnimation(this.animations[standardKeys[7]]);
+  this.spriteGraphics.attack = this._loadAnimation(this.animations[standardKeys[8]]);
+  this.spriteGraphics.defend = this._loadAnimation(this.animations[standardKeys[9]]);
+  this.spriteGraphics.specialMove = this._loadAnimation(this.animations[standardKeys[10]]);
+  this.spriteGraphics.die = this._loadAnimation(this.animations[standardKeys[11]]);
+  this.spriteGraphics.rest = this._loadAnimation(this.animations[standardKeys[12]]);
   
   // Load up the idle animations.
-  this.graphics.southIdle = this._loadAnimation(this.standingGraphics[0]);
-  this.graphics.northIdle = this._loadAnimation(this.standingGraphics[1]);
-  this.graphics.eastIdle = this._loadAnimation(this.standingGraphics[2]);
-  this.graphics.westIdle = this._loadAnimation(this.standingGraphics[3]);
-  this.graphics.northEastIdle = this._loadAnimation(this.standingGraphics[4]);
-  this.graphics.northWestIdle = this._loadAnimation(this.standingGraphics[5]);
-  this.graphics.southEastIdle = this._loadAnimation(this.standingGraphics[6]);
-  this.graphics.southWestIdle = this._loadAnimation(this.standingGraphics[7]);
+  this.spriteGraphics.southIdle = this._loadAnimation(this.animations[standardKeys[13]]);
+  this.spriteGraphics.northIdle = this._loadAnimation(this.animations[standardKeys[14]]);
+  this.spriteGraphics.eastIdle = this._loadAnimation(this.animations[standardKeys[15]]);
+  this.spriteGraphics.westIdle = this._loadAnimation(this.animations[standardKeys[16]]);
+  this.spriteGraphics.northEastIdle = this._loadAnimation(this.animations[standardKeys[17]]);
+  this.spriteGraphics.northWestIdle = this._loadAnimation(this.animations[standardKeys[18]]);
+  this.spriteGraphics.southEastIdle = this._loadAnimation(this.animations[standardKeys[19]]);
+  this.spriteGraphics.southWestIdle = this._loadAnimation(this.animations[standardKeys[20]]);
+  
+  // Get a copy of the animations for the next step;
+  var animations = {};
+  for (var animation in this.animations) {
+      animations[animation] = this.animations[animation];
+  }
+  
+  // Clear out the standard animations to get the custom ones.
+  standardKeys.forEach(function(key) {
+      delete animations[key];
+  });
   
   // Load up the custom graphics.
-  var len = this.customGraphicsNames.length;
-  for (var i = 0; i < len; i++) {
-    var customGraphicName = this.customGraphicsNames[i];
-    var customGraphic = this.customGraphics[i];
-    this.graphics.custom[customGraphicName] = this._loadAnimation(customGraphic);
+  for (var animation in animations) {
+      this.spriteGraphics.custom[animation] = this._loadAnimation(animations[animation]);
   }
   
   return this.loadFrames();
@@ -129,14 +121,14 @@ Sprite.prototype._loadAnimation = function(fileName) {
 
 Sprite.prototype.loadFrames = function () {
   var frames = [];
-  frames = frames.concat(this.graphics.north.frames);
-  frames = frames.concat(this.graphics.south.frames);
-  frames = frames.concat(this.graphics.east.frames);
-  frames = frames.concat(this.graphics.west.frames);
+  frames = frames.concat(this.spriteGraphics.north.frames);
+  frames = frames.concat(this.spriteGraphics.south.frames);
+  frames = frames.concat(this.spriteGraphics.east.frames);
+  frames = frames.concat(this.spriteGraphics.west.frames);
 
-  for (var customAnimation in this.graphics.custom) {
-    if (this.graphics.custom.hasOwnProperty(customAnimation)) {
-      frames = frames.concat(this.graphics.custom[customAnimation].frames);
+  for (var customAnimation in this.spriteGraphics.custom) {
+    if (this.spriteGraphics.custom.hasOwnProperty(customAnimation)) {
+      frames = frames.concat(this.spriteGraphics.custom[customAnimation].frames);
     }
   }
   
@@ -145,14 +137,14 @@ Sprite.prototype.loadFrames = function () {
 
 Sprite.prototype.loadSoundEffects = function () {
   var soundEffects = {};
-  soundEffects[this.graphics.north.soundEffect] = this.graphics.north.soundEffect;
-  soundEffects[this.graphics.south.soundEffect] = this.graphics.south.soundEffect;
-  soundEffects[this.graphics.east.soundEffect] = this.graphics.east.soundEffect;
-  soundEffects[this.graphics.west.soundEffect] = this.graphics.west.soundEffect;
+  soundEffects[this.spriteGraphics.north.soundEffect] = this.spriteGraphics.north.soundEffect;
+  soundEffects[this.spriteGraphics.south.soundEffect] = this.spriteGraphics.south.soundEffect;
+  soundEffects[this.spriteGraphics.east.soundEffect] = this.spriteGraphics.east.soundEffect;
+  soundEffects[this.spriteGraphics.west.soundEffect] = this.spriteGraphics.west.soundEffect;
 
-  for (var customAnimation in this.graphics.custom) {
-    if (this.graphics.custom.hasOwnProperty(customAnimation)) {
-      soundEffects[this.graphics.custom[customAnimation].soundEffect] = this.graphics.custom[customAnimation].soundEffect;
+  for (var customAnimation in this.spriteGraphics.custom) {
+    if (this.spriteGraphics.custom.hasOwnProperty(customAnimation)) {
+      soundEffects[this.spriteGraphics.custom[customAnimation].soundEffect] = this.spriteGraphics.custom[customAnimation].soundEffect;
     }
   }
   
@@ -163,57 +155,57 @@ Sprite.prototype.loadSoundEffects = function () {
 
 Sprite.prototype.setReady = function () {
   console.log("setting ready");
-  this.graphics.active = this.graphics.south;
+  this.spriteGraphics.active = this.spriteGraphics.south;
   this.renderReady = true;
-  var e = {ctx: Crafty.canvasLayer.context};
-  Crafty.trigger("Draw", e);
+//  var e = {ctx: Crafty.canvasLayer.context};
+//  Crafty.trigger("Draw", e);
 };
 
 Sprite.prototype.animate = function (step) {
-  this.graphics.elapsed += step;
+  this.spriteGraphics.elapsed += step;
 
-  if (this.graphics.elapsed >= this.graphics.active.frameRate) {
-    this.graphics.elapsed = this.graphics.elapsed - this.graphics.active.frameRate;
-    var frame = this.graphics.frameIndex + 1;
-    if (frame < this.graphics.active.frames.length) {
-      this.graphics.frameIndex = frame;
+  if (this.spriteGraphics.elapsed >= this.spriteGraphics.active.frameRate) {
+    this.spriteGraphics.elapsed = this.spriteGraphics.elapsed - this.spriteGraphics.active.frameRate;
+    var frame = this.spriteGraphics.frameIndex + 1;
+    if (frame < this.spriteGraphics.active.frames.length) {
+      this.spriteGraphics.frameIndex = frame;
     } else {
-      this.graphics.frameIndex = 0;
+      this.spriteGraphics.frameIndex = 0;
     }
   }
 };
 
 Sprite.prototype.changeGraphics = function (direction) {
-  this.graphics.elapsed = 0;
-  this.graphics.frameIndex = 0;
+  this.spriteGraphics.elapsed = 0;
+  this.spriteGraphics.frameIndex = 0;
 
   switch (direction) {
     case this.DirectionEnum.NORTH:
-      this.graphics.active = this.graphics.north;
+      this.spriteGraphics.active = this.spriteGraphics.north;
       break;
     case this.DirectionEnum.SOUTH:
-      this.graphics.active = this.graphics.south;
+      this.spriteGraphics.active = this.spriteGraphics.south;
       break;
     case this.DirectionEnum.EAST:
-      this.graphics.active = this.graphics.east;
+      this.spriteGraphics.active = this.spriteGraphics.east;
       break;
     case this.DirectionEnum.WEST:
-      this.graphics.active = this.graphics.west;
+      this.spriteGraphics.active = this.spriteGraphics.west;
       break;
     case this.DirectionEnum.NORTH_EAST:
-      this.graphics.active = this.grapics.northEast;
+      this.spriteGraphics.active = this.grapics.northEast;
       break;
     case this.DirectionEnum.NORTH_WEST:
-      this.graphics.active = this.graphics.northWest;
+      this.spriteGraphics.active = this.spriteGraphics.northWest;
       break;
     case this.DirectionEnum.SOUTH_EAST:
-      this.graphics.active = this.graphics.southEast;
+      this.spriteGraphics.active = this.spriteGraphics.southEast;
       break;
     case this.DirectionEnum.SOUTH_WEST:
-      this.graphics.active = this.graphics.southWest;
+      this.spriteGraphics.active = this.spriteGraphics.southWest;
       break;
     default:
-      this.graphics.active = this.graphics.custom[direction];
+      this.spriteGraphics.active = this.spriteGraphics.custom[direction];
   }
 };
 
