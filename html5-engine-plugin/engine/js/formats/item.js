@@ -12,8 +12,6 @@ function Item(filename) {
     for (var property in item) {
         this[property] = item[property];
     }
-
-    return item;
 }
 
 Item.prototype.checkCollisions = function (collision, entity) {

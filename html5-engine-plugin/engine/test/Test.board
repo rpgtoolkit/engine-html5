@@ -1,0 +1,70 @@
+{
+   "version":4.0,
+   "name":"Room",
+   "width":3,
+   "height":3,
+   "tileWidth": 32,
+   "tileHeight": 32,
+   "firstRunProgram": "room.prg",
+   "backgroundMusic": "room.wav",
+   "tileSets":[
+      "tileset1.tileset"
+   ],
+   "sprites":[
+      {
+         "name":"Block.item",
+         "startingPosition":{
+            "x":1,
+            "y":2,
+            "layer":0
+         },
+         "eventType": "overlap",
+         "eventProgram": "myprogram",
+         "thread": "mythread"
+      }
+   ],
+   "layers":[
+      {
+         "name":"Floor",
+         "tiles":[
+            "0:0",
+            "0:1",
+            "0:2",
+            "0:3",
+            "0:4",
+            "0:5",
+            "0:6",
+            "0:7",
+            "0:8"
+         ],
+         "vectors":[
+            {
+               "handle":"walls",
+               "type":"SOLID",
+               "points":[
+                  {
+                     "x":0,
+                     "y":0
+                  },
+                  {
+                     "x":1,
+                     "y":1
+                  }
+               ],
+               "isClosed":true,
+               "events":[
+                  {
+                     "type":"overlap",
+                     "program":"myprogram"
+                  }
+               ]
+            }
+         ]
+      }
+   ],
+   "startingPosition":{
+      "x":1,
+      "y":3,
+      "layer":0
+   }
+}

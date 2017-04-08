@@ -67,47 +67,31 @@ ScreenRenderer.prototype.render = function (context) {
                         boxHeight);
                 context.stroke();
             });
+
+            /*
+             * (Optional) Render Vectors.
+             */
+            this.board.layers[i].vectors.forEach(function (vector) {
+                var haveMoved = false;
+                if (vector.type === "SOLID") {
+                    context.strokeStyle = "#FF0000";
+                } else if (vector.type === "PASSABLE") {
+                    context.strokeStyle = "#FFFFFF";
+                }
+                context.lineWidth = 2.0;
+                context.beginPath();
+                vector.points.forEach(function (point) {
+                    if (!haveMoved) {
+                        context.moveTo(point.x, point.y);
+                        haveMoved = true;
+                    } else {
+                        context.lineTo(point.x, point.y);
+                    }
+                }, this);
+                context.closePath();
+                context.stroke();
+            }, this);
         }
-
-        /*
-         * (Optional) Render Vectors.
-         */
-//    this.board.vectors.forEach(function (vector) {
-//      var haveMoved = false;
-//      context.strokeStyle = "#FFFFFF";
-//      context.lineWidth = 2.0;
-//      context.beginPath();
-//      vector.points.forEach(function (point) {
-//        if (!haveMoved) {
-//          context.moveTo(point.x, point.y);
-//          haveMoved = true;
-//        } else {
-//          context.lineTo(point.x, point.y);
-//        }
-//      }, this);
-//      context.closePath();
-//      context.stroke();
-//    }, this);
-
-        /*
-         * (Optional) Render Programs.
-         */
-//    this.board.programs.forEach(function (program) {
-//      var haveMoved = false;
-//      context.strokeStyle = "#FFFF00";
-//      context.lineWidth = 2.0;
-//      context.beginPath();
-//      program.points.forEach(function (point) {
-//        if (!haveMoved) {
-//          context.moveTo(point.x, point.y);
-//          haveMoved = true;
-//        } else {
-//          context.lineTo(point.x, point.y);
-//        }
-//      }, this);
-//      context.closePath();
-//      context.stroke();
-//    }, this);
     }
 
     /*
@@ -130,19 +114,19 @@ ScreenRenderer.prototype.sortSprites = function (layer, player) {
         layerSprites.push(player);
     }
 
-//  this.board.sprites.forEach(function (entity) {
-//    var sprite = entity.sprite;
-//    var item = sprite.item;
-//    if (layer === sprite.layer && item.renderReady) {
-//      sprite.item.x = entity.x;
-//      sprite.item.y = entity.y;
-//      layerSprites.push(sprite.item);
-//    }
-//  });
-//
-//  layerSprites.sort(function (a, b) {
-//    return a.y - b.y;
-//  });
+    this.board.sprites.forEach(function (entity) {
+        var sprite = entity.sprite;
+        var item = sprite.item;
+        if (layer === sprite.layer && item.renderReady) {
+            sprite.item.x = entity.x;
+            sprite.item.y = entity.y;
+            layerSprites.push(sprite.item);
+        }
+    });
+
+    layerSprites.sort(function (a, b) {
+        return a.y - b.y;
+    });
 
     return layerSprites;
 };

@@ -19,6 +19,10 @@ function Board(filename) {
 
 Board.prototype.setReady = function () {
     rpgtoolkit.craftyBoard.show = true;
+
+    if (this.backgroundMusic) {
+        rpgtoolkit.playSound(this.backgroundMusic, -1);
+    }
 };
 
 Board.prototype.generateLayerCache = function () {
@@ -26,7 +30,7 @@ Board.prototype.generateLayerCache = function () {
 
     // Loop through layers
     var board = this;
-    this.layers.forEach(function(layer) {
+    this.layers.forEach(function (layer) {
         var cnvLayer = document.createElement("canvas");
         cnvLayer.width = board.width * board.tileWidth;
         cnvLayer.height = board.height * board.tileHeight;
@@ -39,13 +43,13 @@ Board.prototype.generateLayerCache = function () {
                 var tile = tiles.shift().split(":");
                 var tileSetIndex = tile[0];
                 var tileIndex = tile[1];
-                
+
                 var tileSet = board.tileSets[tileSetIndex];
                 var renderer = new TilesetRenderer(rpgtoolkit.tilesets[tileSet]);
 
                 // Render tile to board canvas
                 renderer.renderTile(
-                        context, tileIndex, 
+                        context, tileIndex,
                         x * board.tileWidth, y * board.tileHeight);
             }
         }

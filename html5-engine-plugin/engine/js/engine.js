@@ -6,6 +6,9 @@ function RPGToolkit() {
     this.dt = 0; // Craftyjs time step since last frame;
     this.screen = {};
 
+    // Game project file.
+    this.project = null;
+
     // Assets to load.
     this.assetsToLoad = {"images": [], "audio": {}};
     this.waitingEntities = []; // The entities to setReady at assets are loaded.
@@ -35,18 +38,18 @@ function RPGToolkit() {
  * @returns {undefined}
  */
 RPGToolkit.prototype.setup = function (filename) {
-    var project = new Project(filename);
+    this.project = new Project(filename);
 
     // Configure Crafty.
-    Crafty.init(project.resolutionWidth, project.resolutionHeight);
+    Crafty.init(this.project.resolutionWidth, this.project.resolutionHeight);
     Crafty.canvasLayer.init();
-    Crafty.viewport.init(project.resolutionWidth, project.resolutionHeight);
+    Crafty.viewport.init(this.project.resolutionWidth, this.project.resolutionHeight);
     Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
     // Setup run time keys.
     this.keyboardHandler = new Keyboard();
-    this.keyboardHandler.downHandlers[project.menuKey] = function () {
-        rpgtoolkit.runProgram(PATH_PROGRAM + project.menuPlugin, {});
+    this.keyboardHandler.downHandlers[this.project.menuKey] = function () {
+        rpgtoolkit.runProgram(PATH_PROGRAM + this.project.menuPlugin, {});
     };
 
     // Setup the drawing canvas (game screen).
@@ -55,26 +58,17 @@ RPGToolkit.prototype.setup = function (filename) {
     // Setup the RPGcode rutime.
     rpgcode = new RPGcode();
 
-    this.loadCharacter(new Character(PATH_CHARACTER + project.initialCharacter));
-    this.loadBoard(new Board(PATH_BOARD + project.initialBoard));
-    
+    this.loadCharacter(new Character(PATH_CHARACTER + this.project.initialCharacter));
+    this.loadBoard(new Board(PATH_BOARD + this.project.initialBoard));
+
     // Setup up the Character's starting position.
     this.craftyCharacter.character.x = this.craftyBoard.board.startingPosition["x"];
     this.craftyCharacter.character.y = this.craftyBoard.board.startingPosition["y"];
     this.craftyCharacter.x = this.craftyCharacter.character.x;
     this.craftyCharacter.y = this.craftyCharacter.character.y;
     Crafty.viewport.follow(this.craftyCharacter, 0, 0);
-    
-    this.loadCraftyAssets(this.loadScene);
 
-//    // Run the startup program before the game logic loop.
-//    if (!project.startupPrg) {
-//        this.runProgram(PATH_PROGRAM + project.startupPrg, {}, function () {
-//            rpgtoolkit.loadBoard();
-//        });
-//    } else {
-//        rpgtoolkit.loadBoard();
-//    }
+    this.loadCraftyAssets(this.loadScene);
 };
 
 RPGToolkit.prototype.loadScene = function (e) {
@@ -85,12 +79,24 @@ RPGToolkit.prototype.loadScene = function (e) {
             console.error(e);
         }
     } else {
-        Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
+        // Run the startup program before the game logic loop.
+        if (rpgtoolkit.project.startupProgram) {
+            rpgtoolkit.runProgram(PATH_PROGRAM + rpgtoolkit.project.startupProgram, {}, function () {
+                Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
+            });
+        } else {
+            Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
+        }
     }
 };
 
 RPGToolkit.prototype.queueCraftyAssets = function (assets, waitingEntity) {
     if (assets.images) {
+        // Remove duplicates images.
+        var seen = {};
+        assets.images = assets.images.filter(function (item) {
+            return seen.hasOwnProperty(item) ? false : (seen[item] = true);
+        });
         this.assetsToLoad.images = this.assetsToLoad.images.concat(assets.images);
     }
     if (assets.audio) {
@@ -104,12 +110,20 @@ RPGToolkit.prototype.queueCraftyAssets = function (assets, waitingEntity) {
 
 RPGToolkit.prototype.loadCraftyAssets = function (callback) {
     var assets = this.assetsToLoad;
+    console.info("Loading assets=[" + JSON.stringify(assets) + "]");
     Crafty.load(assets,
             function () { // loaded
                 console.log("loaded assets=[" + JSON.stringify(assets) + "]");
+
+                // Notifiy the entities that their assets are ready for use.
                 rpgtoolkit.waitingEntities.forEach(function (entity) {
                     entity.setReady();
                 });
+
+                // Reset asset queue.
+                rpgtoolkit.assetsToLoad = {"images": [], "audio": {}};
+                rpgtoolkit.waitingEntities = [];
+
                 callback();
             },
             function (e) {  // progress 
@@ -144,6 +158,7 @@ RPGToolkit.prototype.createCraftyBoard = function (board) {
 
 RPGToolkit.prototype.loadBoard = function (board) {
     var craftyBoard = this.createCraftyBoard(board);
+    var assets = {"images": [], "audio": {}};
 
     craftyBoard.board.tileSets.forEach(function (file) {
         var tileSet = new Tileset(PATH_TILESET + file);
@@ -151,50 +166,53 @@ RPGToolkit.prototype.loadBoard = function (board) {
         rpgtoolkit.queueCraftyAssets({"images": tileSet.images}, tileSet);
     });
 
-//    /*
-//     * Setup vectors.
-//     */
-//    board.vectors.forEach(function (vector) {
-//        var points = vector.points;
-//        var len = points.length;
-//        for (var i = 0; i < len - 1; i++) {
-//            this.createSolidVector(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, vector.layer);
-//        }
-//
-//        if (vector.isClosed) {
-//            this.createSolidVector(points[0].x, points[0].y, points[len - 1].x, points[len - 1].y, vector.layer);
-//        }
-//    }, this);
+    for (var layer = 0; layer < board.layers.length; layer++) {
+        /*
+         * Setup vectors.
+         */
+        board.layers[layer].vectors.forEach(function (vector) {
+            var type = vector.type;
+            var points = vector.points;
+            var events = vector.events;
 
-//    /*
-//     * Setup board sprites.
-//     */
-//    var len = board.sprites.length;
-//    for (var i = 0; i < len; i++) {
-//        var sprite = board.sprites[i];
-//        sprite.item = new Item(PATH_ITEM + sprite.fileName);
-//        var boardSprite = this.loadSprite(sprite);
-//        boardSprite.sprite.item.load();
-//        board.sprites[i] = boardSprite;
-//    }
-//
-//    /*
-//     * Play background music.
-//     */
-//    var backgroundMusic = board.backgroundMusic;
-//    if (backgroundMusic) {
-//        if (Crafty.asset(backgroundMusic)) {
-//            Crafty.audio.play(backgroundMusic);
-//        } else {
-//            var assets = {"audio": {}};
-//            assets.audio[board.backgroundMusic] = board.backgroundMusic;
-//            Crafty.load(assets, function () {
-//                rpgtoolkit.playSound(backgroundMusic, -1);
-//            });
-//        }
-//    }
+            var len = points.length;
+            for (var i = 0; i < len - 1; i++) {
+                this.createVector(points[i].x, points[i].y,
+                        points[i + 1].x, points[i + 1].y,
+                        layer, type, events);
+            }
+            if (vector.isClosed) {
+                this.createVector(
+                        points[0].x, points[0].y,
+                        points[len - 1].x, points[len - 1].y,
+                        layer, type, events);
+            }
+        }, this);
+    }
 
-    this.queueCraftyAssets({}, craftyBoard.board);
+    /*
+     * Setup board sprites.
+     */
+    var len = board.sprites.length;
+    for (var i = 0; i < len; i++) {
+        var sprite = board.sprites[i];
+        sprite.item = new Item(PATH_ITEM + sprite.name);
+        sprite.x = sprite.startingPosition.x * board.tileWidth;
+        sprite.y = sprite.startingPosition.y * board.tileHeight;
+        sprite.layer = sprite.startingPosition.layer;
+        var boardSprite = this.loadSprite(sprite);
+        board.sprites[i] = boardSprite;
+    }
+
+    /*
+     * Play background music.
+     */
+    var backgroundMusic = board.backgroundMusic;
+    if (backgroundMusic) {
+        assets.audio[board.backgroundMusic] = board.backgroundMusic;
+    }
+
+    this.queueCraftyAssets(assets, craftyBoard.board);
 };
 
 RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
@@ -273,6 +291,10 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
                 this.sprite.item.checkCollisions(hitData[0], this);
             });
     entity.visible = false;
+
+    var assets = sprite.item.load();
+    this.queueCraftyAssets(assets, sprite.item);
+
     return entity;
 };
 
@@ -325,10 +347,11 @@ RPGToolkit.prototype.endProgram = function (nextProgram) {
     }
 };
 
-RPGToolkit.prototype.createSolidVector = function (x1, y1, x2, y2, layer) {
+RPGToolkit.prototype.createVector = function (x1, y1, x2, y2, layer, type, events) {
     var attr = this.calculateVectorPosition(x1, y1, x2, y2);
     attr.layer = layer;
-    attr.vectorType = "solid";
+    attr.vectorType = type;
+    attr.events = events;
 
     Crafty.e("Solid, Collision")
             .attr(attr);
