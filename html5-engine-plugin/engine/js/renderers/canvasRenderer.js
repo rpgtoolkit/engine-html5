@@ -1,3 +1,5 @@
+/* global rpgtoolkit */
+
 function CanvasRenderer() {
   this.renderNowCanvas = document.createElement("canvas");
   this.renderNowCanvas.width = Crafty.viewport._width;

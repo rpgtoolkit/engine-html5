@@ -1,6 +1,8 @@
 /* global PATH_BITMAP */
 
-function Tileset(filename) {
+function TileSet(filename) {
+    console.info("Loading Tileset filename=[%s]", filename);
+    
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();
     req.open("GET", filename, false);
@@ -13,10 +15,10 @@ function Tileset(filename) {
     }
 }
 
-Tileset.prototype.setReady = function () {
+TileSet.prototype.setReady = function () {
+    console.info("Setting ready TileSet name=[%s]", this.name);
+    
     this.img = Crafty.assets[Crafty.__paths.images + this.images[0]];
-    console.log(this.img.width);
-    console.log(this.img.height);
 
     this.tileRows = Math.floor(this.img.height / this.tileHeight);
     this.tileColumns = Math.floor(this.img.width / this.tileWidth);
@@ -30,7 +32,7 @@ Tileset.prototype.setReady = function () {
     this.ctx.drawImage(this.img, 0, 0);
 };
 
-Tileset.prototype.getTile = function (index) {
+TileSet.prototype.getTile = function (index) {
     // Converted 1D index to 2D cooridnates.
     var x = index % this.tileColumns;
     var y = Math.floor(index / this.tileColumns);

@@ -86,7 +86,7 @@ RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
  */
 RPGcode.prototype.animatePlayer = function (playerId, animationId, callback) {
   // TODO: playerId will be unused until parties with multiple players are supported.
-  var player = rpgtoolkit.craftyPlayer.player;
+  var player = rpgtoolkit.craftyCharacter.character;
   var resetGraphics = player.graphics.active;
   rpgcode.setPlayerStance(playerId, animationId);
   rpgcode._animateGeneric(player, resetGraphics, callback);
@@ -259,7 +259,7 @@ RPGcode.prototype.fillRect = function (x, y, width, height, canvasId) {
  * @returns {string}
  */
 RPGcode.prototype.getBoardName = function () {
-  return rpgtoolkit.craftyBoard.board.filename;
+  return rpgtoolkit.craftyBoard.board.name;
 };
 
 /**
@@ -278,7 +278,7 @@ RPGcode.prototype.getGlobal = function (id) {
  * @returns {string}
  */
 RPGcode.prototype.getPlayerDirection = function () {
-  return rpgtoolkit.craftyPlayer.player.direction;
+  return rpgtoolkit.craftyCharacter.character.direction;
 };
 
 /**
@@ -287,11 +287,11 @@ RPGcode.prototype.getPlayerDirection = function () {
  * @returns {array[x, y, z]}
  */
 RPGcode.prototype.getPlayerLocation = function () {
-  var instance = rpgtoolkit.craftyPlayer;
+  var instance = rpgtoolkit.craftyCharacter;
   return [
     instance.x / rpgtoolkit.tileSize, 
     instance.y / rpgtoolkit.tileSize, 
-    instance.player.layer
+    instance.character.layer
   ];
 };
 
@@ -359,7 +359,7 @@ RPGcode.prototype.pushItem = function (item, direction) {
  * @param {string} direction - The direction to push the player in.
  */
 RPGcode.prototype.pushPlayer = function (direction) {
-  rpgtoolkit.craftyPlayer.move(direction, 8);
+  rpgtoolkit.craftyCharacter.move(direction, 8);
 };
 
 /**
@@ -565,9 +565,9 @@ RPGcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) 
 
   // TODO: playerId will be unused until parties with multiple players 
   // are supported.
-  rpgtoolkit.craftyPlayer.x = x;
-  rpgtoolkit.craftyPlayer.y = y;
-  rpgtoolkit.craftyPlayer.player.layer = layer;
+  rpgtoolkit.craftyCharacter.x = x;
+  rpgtoolkit.craftyCharacter.y = y;
+  rpgtoolkit.craftyCharacter.character.layer = layer;
 };
 
 /**
@@ -579,7 +579,7 @@ RPGcode.prototype.setPlayerLocation = function (playerId, x, y, layer, isTiles) 
 RPGcode.prototype.setPlayerStance = function (playerId, stanceId) {
   // TODO: playerId will be unused until parties with multiple players 
   // are supported.
-  rpgtoolkit.craftyPlayer.player.changeGraphics(stanceId);
+  rpgtoolkit.craftyCharacter.character.changeGraphics(stanceId);
   Crafty.trigger("Invalidate");
 };
 

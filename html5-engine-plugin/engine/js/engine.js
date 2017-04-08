@@ -38,6 +38,8 @@ function RPGToolkit() {
  * @returns {undefined}
  */
 RPGToolkit.prototype.setup = function (filename) {
+    console.info("Starting engine with filename=[%s]", filename);
+    
     this.project = new Project(filename);
 
     // Configure Crafty.
@@ -67,6 +69,8 @@ RPGToolkit.prototype.setup = function (filename) {
     this.craftyCharacter.x = this.craftyCharacter.character.x;
     this.craftyCharacter.y = this.craftyCharacter.character.y;
     Crafty.viewport.follow(this.craftyCharacter, 0, 0);
+    
+    // Disable controls until everything is ready.
     this.craftyCharacter.disableControl();
 
     this.loadCraftyAssets(this.loadScene);
@@ -75,9 +79,9 @@ RPGToolkit.prototype.setup = function (filename) {
 RPGToolkit.prototype.loadScene = function (e) {
     if (e) {
         if (e.type === "loading") {
-            console.info(e);
+            console.info(JSON.stringify(e));
         } else {
-            console.error(e);
+            console.error(JSON.stringify(e));
         }
     } else {
         // Run the startup program before the game logic loop.
@@ -116,7 +120,7 @@ RPGToolkit.prototype.loadCraftyAssets = function (callback) {
     console.info("Loading assets=[" + JSON.stringify(assets) + "]");
     Crafty.load(assets,
             function () { // loaded
-                console.log("loaded assets=[" + JSON.stringify(assets) + "]");
+                console.log("Loaded assets=[%s]", JSON.stringify(assets));
 
                 // Notifiy the entities that their assets are ready for use.
                 rpgtoolkit.waitingEntities.forEach(function (entity) {
@@ -139,6 +143,8 @@ RPGToolkit.prototype.loadCraftyAssets = function (callback) {
 };
 
 RPGToolkit.prototype.createCraftyBoard = function (board) {
+    console.debug("Creating Crafty board=[%s]", JSON.stringify(board));
+    
     var width = board.width * this.tileSize;
     var height = board.height * this.tileSize;
 
@@ -160,11 +166,13 @@ RPGToolkit.prototype.createCraftyBoard = function (board) {
 };
 
 RPGToolkit.prototype.loadBoard = function (board) {
+    console.info("Loading board=[%s]", JSON.stringify(board));
+    
     var craftyBoard = this.createCraftyBoard(board);
     var assets = {"images": [], "audio": {}};
 
     craftyBoard.board.tileSets.forEach(function (file) {
-        var tileSet = new Tileset(PATH_TILESET + file);
+        var tileSet = new TileSet(PATH_TILESET + file);
         rpgtoolkit.tilesets[tileSet.name] = tileSet;
         rpgtoolkit.queueCraftyAssets({"images": tileSet.images}, tileSet);
     });
@@ -203,6 +211,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
         sprite.x = sprite.startingPosition.x * board.tileWidth;
         sprite.y = sprite.startingPosition.y * board.tileHeight;
         sprite.layer = sprite.startingPosition.layer;
+        sprite.collisionPoints = sprite.item.collisionPoints;
         var boardSprite = this.loadSprite(sprite);
         board.sprites[i] = boardSprite;
     }
@@ -219,6 +228,9 @@ RPGToolkit.prototype.loadBoard = function (board) {
 };
 
 RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
+    console.info("Switching board to boardName=[%s], tileX=[%d], tileY=[%d]", 
+        boardName, tileX, tileY);
+    
     this.craftyCharacter.disableControl();
 
     Crafty("Solid").destroy();
@@ -234,13 +246,15 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
 };
 
 RPGToolkit.prototype.loadCharacter = function (character) {
+    console.info("Loading character=[%s]", JSON.stringify(character));
+    
     this.craftyCharacter = Crafty.e("DOM, Fourway, Collision")
             .attr({
                 x: character.x,
                 y: character.y,
                 character: character})
             .fourway(50)
-            .collision(new Crafty.polygon([-15, -10, 15, -10, -15, 0, 15, 0]))
+            .collision(new Crafty.polygon(character.collisionPoints))
             .checkHits("Solid")
             .bind("HitOn", function (hitData) {
                 this.character.checkCollisions(hitData[0], this);
@@ -276,6 +290,8 @@ RPGToolkit.prototype.loadCharacter = function (character) {
 };
 
 RPGToolkit.prototype.loadSprite = function (sprite) {
+    console.info("Loading sprite=[%s]", JSON.stringify(sprite));
+    
     // TODO: width and height of item must contain the collision polygon.
     var attr = {
         x: sprite.x,
@@ -283,14 +299,14 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
         layer: sprite.layer,
         w: this.tileSize,
         h: this.tileSize,
-        vectorType: "item",
+        vectorType: "ITEM",
         sprite: sprite,
         events: sprite.events
     };
     var entity = Crafty.e("2D, Solid, Collision")
             .attr(attr)
             .checkHits("Solid")
-            .collision(new Crafty.polygon([-16, -32, 16, -32, 16, 0, -16, 0]))
+            .collision(new Crafty.polygon(sprite.collisionPoints))
             .bind("HitOn", function (hitData) {
                 this.sprite.item.checkCollisions(hitData[0], this);
             });
@@ -303,6 +319,8 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
 };
 
 RPGToolkit.prototype.openProgram = function (filename) {
+    console.info("Opening program=[%s]", filename);
+    
     var program = rpgtoolkit.programCache[filename];
 
     if (!program) {
@@ -320,6 +338,8 @@ RPGToolkit.prototype.openProgram = function (filename) {
 };
 
 RPGToolkit.prototype.runProgram = function (filename, source, callback) {
+    console.info("Running program=[%s]", filename);
+    
     rpgcode.source = source; // Entity that triggered the program.
 
     rpgtoolkit.craftyCharacter.disableControl();
@@ -336,6 +356,8 @@ RPGToolkit.prototype.runProgram = function (filename, source, callback) {
 };
 
 RPGToolkit.prototype.endProgram = function (nextProgram) {
+    console.info("Ending current program, nextProgram=[%s]", nextProgram);
+    
     if (nextProgram) {
         rpgtoolkit.runProgram(PATH_PROGRAM + nextProgram, rpgcode.source,
                 rpgtoolkit.endProgramCallback);
@@ -356,16 +378,6 @@ RPGToolkit.prototype.createVector = function (x1, y1, x2, y2, layer, type, event
     attr.layer = layer;
     attr.vectorType = type;
     attr.events = events;
-
-    Crafty.e("Solid, Collision")
-            .attr(attr);
-};
-
-RPGToolkit.prototype.createProgramVector = function (x1, y1, x2, y2, layer, fileName) {
-    var attr = this.calculateVectorPosition(x1, y1, x2, y2);
-    attr.layer = layer;
-    attr.vectorType = "program";
-    attr.fileName = fileName;
 
     Crafty.e("Solid, Collision")
             .attr(attr);
@@ -400,6 +412,8 @@ RPGToolkit.prototype.calculateVectorPosition = function (x1, y1, x2, y2) {
 };
 
 RPGToolkit.prototype.playSound = function (sound, loop) {
+    console.info("Playing sound=[%s]", sound);
+    
     Crafty.audio.play(sound, loop);
 };
 

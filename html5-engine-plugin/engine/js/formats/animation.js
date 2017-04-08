@@ -1,6 +1,8 @@
 Animation.prototype.constructor = Animation;
 
 function Animation(filename) {
+    console.info("Loading Animation filename=[%s]", filename);
+    
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();
     req.open("GET", filename, false);

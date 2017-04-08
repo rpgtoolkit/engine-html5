@@ -1,6 +1,8 @@
 /* global rpgtoolkit */
 
 function Board(filename) {
+    console.info("Loading Board filename=[%s]", filename);
+    
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();
     req.open("GET", filename, false);
@@ -12,12 +14,12 @@ function Board(filename) {
         this[property] = board[property];
     }
 
-    this.tiles = [];
     this.layerCache = [];
-    this.filename = filename;
 }
 
 Board.prototype.setReady = function () {
+    console.info("Setting ready Board name=[%s]", this.name);
+    
     rpgtoolkit.craftyBoard.show = true;
 
     if (this.backgroundMusic) {
@@ -26,6 +28,8 @@ Board.prototype.setReady = function () {
 };
 
 Board.prototype.generateLayerCache = function () {
+    console.info("Generating the layer cache for Board name=[%s]", this.name);
+    
     this.layerCache = [];
 
     // Loop through layers

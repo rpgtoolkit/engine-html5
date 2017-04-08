@@ -54,17 +54,23 @@ ScreenRenderer.prototype.render = function (context) {
                         sprite.spriteGraphics.active.width,
                         sprite.spriteGraphics.active.height);
 
-                // Draw collision rectangle.
-                var boxWidth = sprite.spriteGraphics.active.boundingBox.width;
-                var boxHeight = sprite.spriteGraphics.active.boundingBox.height;
+                // Draw collision ploygon.
+                var x, y, moved = false;
+                var points = sprite.collisionPoints;
                 context.beginPath();
                 context.lineWidth = "2";
-                context.strokeStyle = "#FFFFFF";
-                context.rect(
-                        sprite.x - (boxWidth / 2),
-                        sprite.y - boxHeight,
-                        boxWidth,
-                        boxHeight);
+                context.strokeStyle = "#FF0000";
+                for (var j = 0; j < points.length - 1; j += 2) {
+                    x = sprite.x + points[j];
+                    y = sprite.y + points[j + 1];
+                    if (!moved) {
+                        context.moveTo(x, y);
+                        moved = true;
+                    } else {
+                        context.lineTo(x, y);
+                    }
+                }
+                context.closePath();
                 context.stroke();
             });
 

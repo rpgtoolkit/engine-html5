@@ -2,6 +2,8 @@ Item.prototype = new Sprite();
 Item.prototype.constructor = Item;
 
 function Item(filename) {
+    console.info("Loading Item filename=[%s]", filename);
+
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();
     req.open("GET", filename, false);
@@ -12,17 +14,21 @@ function Item(filename) {
     for (var property in item) {
         this[property] = item[property];
     }
+    
+    this.calculateCollisionPoints();
 }
 
 Item.prototype.checkCollisions = function (collision, entity) {
+    console.debug("Checking collisions for Item name=[%s]", this.name);
+
     var object = collision.obj;
     switch (object.vectorType) {
-        case "item":
+        case "ITEM":
             entity.x += collision.normal.x;
             entity.y += collision.normal.y;
             entity.resetHitChecks();
             break;
-        case "solid":
+        case "SOLID":
             entity.x += collision.normal.x;
             entity.y += collision.normal.y;
             entity.resetHitChecks();

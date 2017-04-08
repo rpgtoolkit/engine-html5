@@ -4,6 +4,7 @@ function Sprite() {
     this.x = 0;
     this.y = 0;
     this.layer = 0;
+    this.collisionPoints = [];
     this.spriteGraphics = {
         elapsed: 0,
         frameIndex: 0,
@@ -46,7 +47,21 @@ Sprite.prototype.DirectionEnum = {
     SOUTH_WEST: "sw"
 };
 
+Sprite.prototype.calculateCollisionPoints = function () {
+    // Build the collision polygon.
+    var xOffset = this.baseVectorOffset.x;
+    var yOffset = this.baseVectorOffset.y;
+    var points = [];
+    this.baseVector.points.forEach(function (point) {
+        points.push(point.x += xOffset);
+        points.push(point.y += yOffset);
+    });
+    this.collisionPoints = points;
+};
+
 Sprite.prototype.load = function () {
+    console.info("Loading Sprite name=[%s]", this.name);
+
     var frames = this.loadAnimations();
     var soundEffects = this.loadSoundEffects();
 
@@ -55,6 +70,8 @@ Sprite.prototype.load = function () {
 };
 
 Sprite.prototype.loadAnimations = function () {
+    console.info("Loading Sprite animations name=[%s]", this.name);
+
     // Load up the standard animations.
     var standardKeys = ["SOUTH", "NORTH", "EAST", "WEST", "NORTH_EAST", "NORTH_WEST",
         "SOUTH_EAST", "SOUTH_WEST", "ATTACK", "DEFEND", "SPECIAL_MOVE", "DIE",
@@ -105,14 +122,10 @@ Sprite.prototype.loadAnimations = function () {
 };
 
 Sprite.prototype._loadAnimation = function (fileName) {
+    console.debug("Loading Sprite animation name=[%s], fileName=[%s]", this.name, fileName);
+
     if (fileName) {
         var animation = new Animation(PATH_ANIMATION + fileName);
-        animation.boundingBox = {
-            x: 0,
-            y: 0,
-            width: 30,
-            height: 15
-        };
         return animation;
     } else {
         return null;
@@ -120,6 +133,8 @@ Sprite.prototype._loadAnimation = function (fileName) {
 };
 
 Sprite.prototype.loadFrames = function () {
+    console.info("Loading Sprite frames name=[%s]", this.name);
+
     var frames = [];
     frames = frames.concat(this.spriteGraphics.north.frames);
     frames = frames.concat(this.spriteGraphics.south.frames);
@@ -136,6 +151,8 @@ Sprite.prototype.loadFrames = function () {
 };
 
 Sprite.prototype.loadSoundEffects = function () {
+    console.info("Loading Sprite sound effects name=[%s]", this.name);
+
     var soundEffects = {};
     soundEffects[this.spriteGraphics.north.soundEffect] = this.spriteGraphics.north.soundEffect;
     soundEffects[this.spriteGraphics.south.soundEffect] = this.spriteGraphics.south.soundEffect;
@@ -154,11 +171,9 @@ Sprite.prototype.loadSoundEffects = function () {
 };
 
 Sprite.prototype.setReady = function () {
-    console.log("setting ready");
+    console.info("Setting ready Sprite name=[%s]", this.name);
     this.spriteGraphics.active = this.spriteGraphics.south;
     this.renderReady = true;
-//  var e = {ctx: Crafty.canvasLayer.context};
-//  Crafty.trigger("Draw", e);
 };
 
 Sprite.prototype.animate = function (step) {
@@ -210,20 +225,14 @@ Sprite.prototype.changeGraphics = function (direction) {
 };
 
 Sprite.prototype.checkCollisions = function (collision, entity) {
+    console.debug("Checking collisions for Sprite name=[%s]", this.name);
+
     var object = collision.obj;
     switch (object.vectorType) {
-        case "item":
+        case "ITEM":
             entity.x += collision.normal.x;
             entity.y += collision.normal.y;
-
-            if (object.sprite.activationProgram) {
-                rpgtoolkit.runProgram(PATH_PROGRAM.concat(object.sprite.activationProgram), object);
-            }
-
             entity.resetHitChecks();
-            break;
-        case "program":
-            rpgtoolkit.runProgram(object.fileName, entity);
             break;
         case "SOLID":
             entity.x += collision.normal.x;
@@ -233,9 +242,9 @@ Sprite.prototype.checkCollisions = function (collision, entity) {
         case "PASSABLE":
             break;
     }
-    
+
     var events = object.events;
-    events.forEach(function(event) {
+    events.forEach(function (event) {
         if (event.program) {
             rpgtoolkit.runProgram(PATH_PROGRAM.concat(event.program), object);
         }

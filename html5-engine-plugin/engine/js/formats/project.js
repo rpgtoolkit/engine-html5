@@ -1,4 +1,6 @@
 function Project(filename) {
+    console.info("Loading Project filename=[%s]", filename);
+    
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();
     req.open("GET", filename, false);
