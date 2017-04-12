@@ -44,7 +44,10 @@ Sprite.prototype.DirectionEnum = {
     NORTH_EAST: "ne",
     NORTH_WEST: "nw",
     SOUTH_EAST: "se",
-    SOUTH_WEST: "sw"
+    SOUTH_WEST: "sw",
+    ATTACK: "ATTACK",
+    DEFEND: "DEFEND",
+    DIE: "DIE"
 };
 
 Sprite.prototype.calculateCollisionPoints = function () {
@@ -136,10 +139,14 @@ Sprite.prototype.loadFrames = function () {
     console.info("Loading Sprite frames name=[%s]", this.name);
 
     var frames = [];
-    frames = frames.concat(this.spriteGraphics.north.frames);
-    frames = frames.concat(this.spriteGraphics.south.frames);
-    frames = frames.concat(this.spriteGraphics.east.frames);
-    frames = frames.concat(this.spriteGraphics.west.frames);
+    // TODO: create a standard graphics collection in the place of this hack!
+    for (var property in this.spriteGraphics) {
+        if (this.spriteGraphics[property]) {
+            if (this.spriteGraphics[property].frames) {
+                frames = frames.concat(this.spriteGraphics[property].frames);
+            }
+        }
+    }
 
     for (var customAnimation in this.spriteGraphics.custom) {
         if (this.spriteGraphics.custom.hasOwnProperty(customAnimation)) {
@@ -219,6 +226,15 @@ Sprite.prototype.changeGraphics = function (direction) {
         case this.DirectionEnum.SOUTH_WEST:
             this.spriteGraphics.active = this.spriteGraphics.southWest;
             break;
+        case this.DirectionEnum.ATTACK:
+            this.spriteGraphics.active = this.spriteGraphics.attack;
+            break;
+        case this.DirectionEnum.DEFEND:
+            this.spriteGraphics.active = this.spriteGraphics.defend;
+            break;
+        case this.DirectionEnum.DIE:
+            this.spriteGraphics.active = this.spriteGraphics.die;
+            break;
         default:
             this.spriteGraphics.active = this.spriteGraphics.custom[direction];
     }
@@ -228,6 +244,11 @@ Sprite.prototype.checkCollisions = function (collision, entity) {
     console.debug("Checking collisions for Sprite name=[%s]", this.name);
 
     var object = collision.obj;
+
+    if (object.layer !== this.layer) {
+        return;
+    }
+
     switch (object.vectorType) {
         case "ITEM":
             entity.x += collision.normal.x;

@@ -35,7 +35,7 @@ function RPGcode() {
  * @returns {undefined}
  */
 RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) {  
-  var activeGraphics = generic.graphics.active;
+  var activeGraphics = generic.spriteGraphics.active;
   var soundEffect = activeGraphics.soundEffect;
   var frameRate = activeGraphics.frameRate;
   var delay = frameRate * 1000; // Get number of milliseconds.
@@ -45,7 +45,7 @@ RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) 
     generic.animate(frameRate);
     Crafty.trigger("Invalidate");
   }, delay, repeat, function () {
-    generic.graphics.active = resetGraphics;
+    generic.spriteGraphics.active = resetGraphics;
     Crafty.trigger("Invalidate");
 
     if (callback) {
@@ -70,7 +70,7 @@ RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
   var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
   if (entity) {
     var item = entity.sprite.item;
-    var resetGraphics = item.graphics.active;
+    var resetGraphics = item.spriteGraphics.active;
     rpgcode.setItemStance(itemId, animationId);
     rpgcode._animateGeneric(item, resetGraphics, callback);
   }
@@ -87,7 +87,7 @@ RPGcode.prototype.animateItem = function (itemId, animationId, callback) {
 RPGcode.prototype.animatePlayer = function (playerId, animationId, callback) {
   // TODO: playerId will be unused until parties with multiple players are supported.
   var player = rpgtoolkit.craftyCharacter.character;
-  var resetGraphics = player.graphics.active;
+  var resetGraphics = player.spriteGraphics.active;
   rpgcode.setPlayerStance(playerId, animationId);
   rpgcode._animateGeneric(player, resetGraphics, callback);
 };
@@ -422,17 +422,16 @@ RPGcode.prototype.renderNow = function (canvasId) {
  * @param {number} tileX - The x position in tiles.
  * @param {number} tileY - The y postion in tiles.
  * @param {number} layer - The layer the tile is on.
- * @param {string} tileName - The name of the tile to replace with.
+ * @param {string} tileSet - The name of the TileSet of the replacement tile.
+ * @param {number} tileIndex - The index of the tile in the replacement set.
  */
-RPGcode.prototype.replaceTile = function (tileX, tileY, layer, tileName) {
-  var index = rpgtoolkit.craftyBoard.board.tileNames.indexOf(tileName);
-  if (index === -1) {
-    index = rpgtoolkit.craftyBoard.board.tileNames.push(tileName);
-  } else {
-    index += 1;
-  }
-  rpgtoolkit.craftyBoard.board.tiles[layer][tileY][tileX] = index;
-  rpgtoolkit.craftyBoard.board.layerCache = []; // TODO: Very expensive.
+RPGcode.prototype.replaceTile = function (tileX, tileY, layer, tileSet, tileIndex) {
+  var tile = rpgtoolkit.tilesets[tileSet].getTile(tileIndex);
+  rpgtoolkit.craftyBoard.board.replaceTile(tileX, tileY, layer, tile);
+};
+
+RPGcode.prototype.removeTile = function (tileX, tileY, layer) {
+  rpgtoolkit.craftyBoard.board.removeTile(tileX, tileY, layer);
 };
 
 /**

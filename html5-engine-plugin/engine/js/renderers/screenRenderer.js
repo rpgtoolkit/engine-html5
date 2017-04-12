@@ -50,7 +50,7 @@ ScreenRenderer.prototype.render = function (context) {
                 context.drawImage(
                         frame,
                         sprite.x - (frame.width / 2),
-                        sprite.y - frame.height,
+                        sprite.y - (frame.height / 2),
                         sprite.spriteGraphics.active.width,
                         sprite.spriteGraphics.active.height);
 
@@ -94,7 +94,6 @@ ScreenRenderer.prototype.render = function (context) {
                         context.lineTo(point.x, point.y);
                     }
                 }, this);
-                context.closePath();
                 context.stroke();
             }, this);
         }

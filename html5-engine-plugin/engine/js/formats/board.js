@@ -19,12 +19,7 @@ function Board(filename) {
 
 Board.prototype.setReady = function () {
     console.info("Setting ready Board name=[%s]", this.name);
-    
     rpgtoolkit.craftyBoard.show = true;
-
-    if (this.backgroundMusic) {
-        rpgtoolkit.playSound(this.backgroundMusic, -1);
-    }
 };
 
 Board.prototype.generateLayerCache = function () {
@@ -45,8 +40,12 @@ Board.prototype.generateLayerCache = function () {
         for (var y = 0; y < board.height; y++) {
             for (var x = 0; x < board.width; x++) {
                 var tile = tiles.shift().split(":");
-                var tileSetIndex = tile[0];
-                var tileIndex = tile[1];
+                var tileSetIndex = parseInt(tile[0]);
+                var tileIndex = parseInt(tile[1]);
+                
+                if (tileSetIndex === -1 || tileIndex === -1) {
+                    continue; // Blank tile.
+                }
 
                 var tileSet = board.tileSets[tileSetIndex];
                 var renderer = new TilesetRenderer(rpgtoolkit.tilesets[tileSet]);
@@ -60,5 +59,17 @@ Board.prototype.generateLayerCache = function () {
 
         board.layerCache.push(cnvLayer);
     });
+};
+
+Board.prototype.replaceTile = function(x, y, layer, newTile) {
+    var context = this.layerCache[layer].getContext("2d");
+    
+    context.putImageData(newTile, x * this.tileWidth, y * this.tileHeight);
+};
+
+Board.prototype.removeTile = function(x, y, layer) {
+    var context = this.layerCache[layer].getContext("2d");
+    
+    context.clearRect(x * this.tileWidth, y * this.tileHeight, this.tileWidth, this.tileHeight);
 };
   
