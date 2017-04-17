@@ -16,4 +16,5 @@ function Character(filename) {
     }
 
     this.calculateCollisionPoints();
+    this.calculateActivationPoints();
 }

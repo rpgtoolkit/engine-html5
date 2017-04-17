@@ -44,58 +44,59 @@ ScreenRenderer.prototype.render = function (context) {
              * Render sprites.
              */
             layerSprites.forEach(function (sprite) {
-                var asset = Crafty.__paths.images +
-                        sprite.spriteGraphics.active.frames[sprite.spriteGraphics.frameIndex];
-                var frame = Crafty.assets[asset];
-                context.drawImage(
-                        frame,
-                        sprite.x - (frame.width / 2),
-                        sprite.y - (frame.height / 2),
-                        sprite.spriteGraphics.active.width,
-                        sprite.spriteGraphics.active.height);
+                if (sprite.layer === i) {
+                    var frame = sprite.getActiveFrame();
+                    var x = sprite.x - (frame.width / 2);
+                    var y = sprite.y - (frame.height / 2);
+                    context.drawImage(frame, x, y);
 
-                // Draw collision ploygon.
-                var x, y, moved = false;
-                var points = sprite.collisionPoints;
-                context.beginPath();
-                context.lineWidth = "2";
-                context.strokeStyle = "#FF0000";
-                for (var j = 0; j < points.length - 1; j += 2) {
-                    x = sprite.x + points[j];
-                    y = sprite.y + points[j + 1];
-                    if (!moved) {
-                        context.moveTo(x, y);
-                        moved = true;
-                    } else {
-                        context.lineTo(x, y);
+                    if (rpgtoolkit.isShowVectors) {
+                        // Draw collision ploygon.
+                        var x, y, moved = false;
+                        var points = sprite.collisionPoints;
+                        context.beginPath();
+                        context.lineWidth = "2";
+                        context.strokeStyle = "#FF0000";
+                        for (var j = 0; j < points.length - 1; j += 2) {
+                            x = sprite.x + points[j];
+                            y = sprite.y + points[j + 1];
+                            if (!moved) {
+                                context.moveTo(x, y);
+                                moved = true;
+                            } else {
+                                context.lineTo(x, y);
+                            }
+                        }
+                        context.closePath();
+                        context.stroke();
                     }
                 }
-                context.closePath();
-                context.stroke();
             });
 
-            /*
-             * (Optional) Render Vectors.
-             */
-            this.board.layers[i].vectors.forEach(function (vector) {
-                var haveMoved = false;
-                if (vector.type === "SOLID") {
-                    context.strokeStyle = "#FF0000";
-                } else if (vector.type === "PASSABLE") {
-                    context.strokeStyle = "#FFFFFF";
-                }
-                context.lineWidth = 2.0;
-                context.beginPath();
-                vector.points.forEach(function (point) {
-                    if (!haveMoved) {
-                        context.moveTo(point.x, point.y);
-                        haveMoved = true;
-                    } else {
-                        context.lineTo(point.x, point.y);
+            if (rpgtoolkit.isShowVectors) {
+                /*
+                 * (Optional) Render Vectors.
+                 */
+                this.board.layers[i].vectors.forEach(function (vector) {
+                    var haveMoved = false;
+                    if (vector.type === "SOLID") {
+                        context.strokeStyle = "#FF0000";
+                    } else if (vector.type === "PASSABLE") {
+                        context.strokeStyle = "#FFFFFF";
                     }
+                    context.lineWidth = 2.0;
+                    context.beginPath();
+                    vector.points.forEach(function (point) {
+                        if (!haveMoved) {
+                            context.moveTo(point.x, point.y);
+                            haveMoved = true;
+                        } else {
+                            context.lineTo(point.x, point.y);
+                        }
+                    }, this);
+                    context.stroke();
                 }, this);
-                context.stroke();
-            }, this);
+            }
         }
     }
 

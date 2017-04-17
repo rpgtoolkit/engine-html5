@@ -4,7 +4,9 @@ function Sprite() {
     this.x = 0;
     this.y = 0;
     this.layer = 0;
-    this.collisionPoints = [];
+    this.direction = this.DirectionEnum.SOUTH,
+            this.collisionPoints = [];
+    this.activationPoints = [];
     this.spriteGraphics = {
         elapsed: 0,
         frameIndex: 0,
@@ -60,6 +62,18 @@ Sprite.prototype.calculateCollisionPoints = function () {
         points.push(point.y += yOffset);
     });
     this.collisionPoints = points;
+};
+
+Sprite.prototype.calculateActivationPoints = function () {
+    // Build the collision polygon.
+    var xOffset = this.activationOffset.x;
+    var yOffset = this.activationOffset.y;
+    var points = [];
+    this.activationVector.points.forEach(function (point) {
+        points.push(point.x += xOffset);
+        points.push(point.y += yOffset);
+    });
+    this.activationPoints = points;
 };
 
 Sprite.prototype.load = function () {
@@ -142,15 +156,15 @@ Sprite.prototype.loadFrames = function () {
     // TODO: create a standard graphics collection in the place of this hack!
     for (var property in this.spriteGraphics) {
         if (this.spriteGraphics[property]) {
-            if (this.spriteGraphics[property].frames) {
-                frames = frames.concat(this.spriteGraphics[property].frames);
+            if (this.spriteGraphics[property].spriteSheet) {
+                frames = frames.concat(this.spriteGraphics[property].spriteSheet.image);
             }
         }
     }
 
     for (var customAnimation in this.spriteGraphics.custom) {
         if (this.spriteGraphics.custom.hasOwnProperty(customAnimation)) {
-            frames = frames.concat(this.spriteGraphics.custom[customAnimation].frames);
+            frames = frames.concat(this.spriteGraphics.custom[customAnimation].spriteSheet.image);
         }
     }
 
@@ -184,12 +198,17 @@ Sprite.prototype.setReady = function () {
 };
 
 Sprite.prototype.animate = function (step) {
+    if (!step) {
+        return;
+    }
+
     this.spriteGraphics.elapsed += step;
 
-    if (this.spriteGraphics.elapsed >= this.spriteGraphics.active.frameRate) {
-        this.spriteGraphics.elapsed = this.spriteGraphics.elapsed - this.spriteGraphics.active.frameRate;
+    var delay = (1.0 / this.spriteGraphics.active.frameRate);
+    if (this.spriteGraphics.elapsed >= delay) {
+        this.spriteGraphics.elapsed -= delay;
         var frame = this.spriteGraphics.frameIndex + 1;
-        if (frame < this.spriteGraphics.active.frames.length) {
+        if (frame < this.spriteGraphics.active.spriteSheet.canvas.width / this.spriteGraphics.active.width) {
             this.spriteGraphics.frameIndex = frame;
         } else {
             this.spriteGraphics.frameIndex = 0;
@@ -240,6 +259,55 @@ Sprite.prototype.changeGraphics = function (direction) {
     }
 };
 
+Sprite.prototype.prepareActiveAnimation = function () {
+    var animation = this.spriteGraphics.active;
+    var spriteSheet = animation.spriteSheet;
+    var image = Crafty.assets[Crafty.__paths.images + spriteSheet.image];
+
+    var canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    spriteSheet.canvas = canvas;
+    spriteSheet.ctx = canvas.getContext("2d");
+    spriteSheet.ctx.drawImage(image, 0, 0);
+    spriteSheet.frames = [];
+
+    var columns = Math.round(image.width / animation.width);
+    var rows = Math.round(image.height / animation.height);
+    var frames = columns * rows;
+    for (var index = 0; index < frames; index++) {
+        // Converted 1D index to 2D cooridnates.
+        var x = index % columns;
+        var y = Math.floor(index / columns);
+
+        var imageData = spriteSheet.ctx.getImageData(
+                x * animation.width, y * animation.height,
+                animation.width, animation.height);
+
+        var frame = document.createElement("canvas");
+        frame.width = animation.width;
+        frame.height = animation.height;
+        var frameCtx = frame.getContext("2d");
+        frameCtx.putImageData(imageData, 0, 0);
+
+        spriteSheet.frames.push(frame);
+    }
+};
+
+Sprite.prototype.getActiveFrame = function () {
+    // TODO: Switch to Crafty animation.
+    var index = this.spriteGraphics.frameIndex;
+    var animation = this.spriteGraphics.active;
+    var spriteSheet = animation.spriteSheet;
+
+    if (!animation.spriteSheet.ctx) {
+        // First time rendering.
+        this.prepareActiveAnimation();
+    }
+
+    return spriteSheet.frames[index];
+};
+
 Sprite.prototype.checkCollisions = function (collision, entity) {
     console.debug("Checking collisions for Sprite name=[%s]", this.name);
 
@@ -263,11 +331,24 @@ Sprite.prototype.checkCollisions = function (collision, entity) {
         case "PASSABLE":
             break;
     }
+};
 
-    var events = object.events;
-    events.forEach(function (event) {
-        if (event.program) {
-            rpgtoolkit.runProgram(PATH_PROGRAM.concat(event.program), object);
+Sprite.prototype.checkActivations = function (collisions, entity) {
+    console.debug("Checking activations for Sprite name=[%s]", this.name);
+
+    var layer = this.layer;
+    collisions.forEach(function (collision) {
+        var object = collision.obj;
+
+        if (object.layer !== layer) {
+            return;
         }
+
+        var events = object.events;
+        events.forEach(function (event) {
+            if (event.program) {
+                rpgtoolkit.runProgram(PATH_PROGRAM.concat(event.program), object);
+            }
+        });
     });
 };

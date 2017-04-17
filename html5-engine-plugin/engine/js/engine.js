@@ -30,8 +30,15 @@ function RPGToolkit() {
     this.keyDownHandlers = null;
     this.keyUpHandlers = null;
 
+    // Custom movement parameters.
+    this.controlEnabled = false;
+    this.movementSpeed = 1;
+
     // Is this the first game scene.
     this.firstScene = true;
+
+    // Debugging options.
+    this.showVectors = false;
 }
 
 /**
@@ -47,7 +54,7 @@ RPGToolkit.prototype.setup = function (filename) {
 
     // Configure Crafty.
     Crafty.init(this.project.resolutionWidth, this.project.resolutionHeight);
-    Crafty.canvasLayer.init();
+//    Crafty.canvasLayer.init();
     Crafty.viewport.init(this.project.resolutionWidth, this.project.resolutionHeight);
     Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
@@ -69,12 +76,16 @@ RPGToolkit.prototype.setup = function (filename) {
     // Setup up the Character's starting position.
     this.craftyCharacter.character.x = this.craftyBoard.board.startingPosition["x"];
     this.craftyCharacter.character.y = this.craftyBoard.board.startingPosition["y"];
+    this.craftyCharacter.character.layer = this.craftyBoard.board.startingPosition["layer"];
     this.craftyCharacter.x = this.craftyCharacter.character.x;
     this.craftyCharacter.y = this.craftyCharacter.character.y;
+    this.craftyCharacter.activationVector.x = this.craftyCharacter.x;
+    this.craftyCharacter.activationVector.y = this.craftyCharacter.y;
+
     Crafty.viewport.follow(this.craftyCharacter, 0, 0);
 
     // Disable controls until everything is ready.
-    this.craftyCharacter.disableControl();
+    this.controlEnabled = false;
 
     this.loadCraftyAssets(this.loadScene);
 };
@@ -105,8 +116,16 @@ RPGToolkit.prototype.startScene = function () {
     if (rpgtoolkit.craftyBoard.board.backgroundMusic) {
         rpgtoolkit.playSound(rpgtoolkit.craftyBoard.board.backgroundMusic, -1);
     }
-    Crafty.trigger("Draw", {ctx: Crafty.canvasLayer.context});
-    rpgtoolkit.craftyCharacter.enableControl();
+    Crafty.trigger("Invalidate");
+
+    if (rpgtoolkit.craftyBoard.board.firstRunProgram) {
+        rpgtoolkit.runProgram(
+                PATH_PROGRAM + rpgtoolkit.craftyBoard.board.firstRunProgram,
+                null, null);
+    } else {
+        rpgtoolkit.controlEnabled = true;
+        Crafty.trigger("EnterFrame", {});
+    }
 };
 
 
@@ -187,8 +206,8 @@ RPGToolkit.prototype.loadCraftyAssets = function (callback) {
 RPGToolkit.prototype.createCraftyBoard = function (board) {
     console.debug("Creating Crafty board=[%s]", JSON.stringify(board));
 
-    var width = board.width * this.tileSize;
-    var height = board.height * this.tileSize;
+    var width = board.width * board.tileWidth;
+    var height = board.height * board.tileHeight;
 
     Crafty.c("Board", {
         ready: true,
@@ -273,7 +292,7 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
     console.info("Switching board to boardName=[%s], tileX=[%d], tileY=[%d]",
             boardName, tileX, tileY);
 
-    this.craftyCharacter.disableControl();
+    this.controlEnabled = false;
 
     Crafty("Solid").destroy();
     Crafty("Board").destroy();
@@ -296,42 +315,67 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
 RPGToolkit.prototype.loadCharacter = function (character) {
     console.info("Loading character=[%s]", JSON.stringify(character));
 
-    this.craftyCharacter = Crafty.e("DOM, Fourway, Collision")
+    Crafty.c("BaseVector", {
+        BaseVector: function (polygon) {
+            this.requires("Collision");
+            this.collision(polygon);
+            this.checkHits("Solid");
+
+            this.bind("HitOn", function (hitData) {
+                rpgtoolkit.craftyCharacter.character.checkCollisions(hitData[0], this);
+            });
+            this.bind("HitOff", function (comp) {
+            });
+
+            return this;
+        }
+    });
+    Crafty.c("ActivationVector", {
+        ActivationVector: function (polygon) {
+            this.requires("Collision");
+            this.collision(polygon);
+            this.checkHits("Solid");
+
+            this.bind("HitOn", function (hitData) {
+                rpgtoolkit.craftyCharacter.character.checkActivations(hitData, this);
+            });
+            this.bind("HitOff", function (comp) {
+            });
+
+            return this;
+        }
+    });
+
+    // Have to keep this in a separate entity, as Crafty entites can
+    // only have 1 collision polygon at a time, using composition to
+    // get around this limitation.
+    var activationVector = Crafty.e("2D, Canvas, ActivationVector")
             .attr({
                 x: character.x,
                 y: character.y,
                 character: character})
-            .fourway(50)
-            .collision(new Crafty.polygon(character.collisionPoints))
-            .checkHits("Solid")
-            .bind("HitOn", function (hitData) {
-                this.character.checkCollisions(hitData[0], this);
+            .ActivationVector(new Crafty.polygon(character.activationPoints));
+
+    this.craftyCharacter = Crafty.e("2D, Canvas, player, CustomControls, BaseVector")
+            .attr({
+                x: character.x,
+                y: character.y,
+                character: character,
+                activationVector: activationVector
             })
-            .bind("HitOff", function (comp) {
-                Crafty.log(comp);
-                Crafty.log("Collision with Solid entity ended.");
-            })
+            .CustomControls(1)
+            .BaseVector(new Crafty.polygon(character.collisionPoints))
             .bind("Moved", function (from) {
+                // Move activation vector with us.
+                this.activationVector.x = this.x;
+                this.activationVector.y = this.y;
+
                 this.character.animate(this.dt);
-            })
-            .bind("NewDirection", function (direction) {
-                if (direction.x === 0 && direction.y === -1) {
-                    this.character.direction = this.character.DirectionEnum.NORTH;
-                    this.character.changeGraphics(this.character.direction);
-                } else if (direction.x === 0 && direction.y === 1) {
-                    this.character.direction = this.character.DirectionEnum.SOUTH;
-                    this.character.changeGraphics(this.character.DirectionEnum.SOUTH);
-                } else if (direction.x === -1 && direction.y === 0) {
-                    this.character.direction = this.character.DirectionEnum.WEST;
-                    this.character.changeGraphics(this.character.DirectionEnum.WEST);
-                } else if (direction.x === 1 && direction.y === 0) {
-                    this.character.direction = this.character.DirectionEnum.EAST;
-                    this.character.changeGraphics(this.character.DirectionEnum.EAST);
-                }
             })
             .bind("EnterFrame", function (event) {
                 this.dt = event.dt / 1000;
             });
+
     this.craftyCharacter.visible = false;
     var assets = this.craftyCharacter.character.load();
     this.queueCraftyAssets(assets, character);
@@ -345,8 +389,8 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
         x: sprite.x,
         y: sprite.y,
         layer: sprite.layer,
-        w: this.tileSize,
-        h: this.tileSize,
+        w: this.craftyBoard.board.tileWidth,
+        h: this.craftyBoard.board.tileHeight,
         vectorType: "ITEM",
         sprite: sprite,
         events: sprite.events
@@ -390,7 +434,7 @@ RPGToolkit.prototype.runProgram = function (filename, source, callback) {
 
     rpgcode.source = source; // Entity that triggered the program.
 
-    rpgtoolkit.craftyCharacter.disableControl();
+    rpgtoolkit.controlEnabled = false;
 
     // Store endProgram callback and runtime key handlers.
     rpgtoolkit.endProgramCallback = callback;
@@ -417,7 +461,8 @@ RPGToolkit.prototype.endProgram = function (nextProgram) {
 
         rpgtoolkit.keyboardHandler.downHandlers = rpgtoolkit.keyDownHandlers;
         rpgtoolkit.keyboardHandler.upHandlers = rpgtoolkit.keyUpHandlers;
-        rpgtoolkit.craftyCharacter.enableControl();
+        rpgtoolkit.controlEnabled = true;
+        Crafty.trigger("EnterFrame", {});
     }
 };
 
