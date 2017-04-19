@@ -194,6 +194,7 @@ Sprite.prototype.loadSoundEffects = function () {
 Sprite.prototype.setReady = function () {
     console.info("Setting ready Sprite name=[%s]", this.name);
     this.spriteGraphics.active = this.spriteGraphics.south;
+    this.getActiveFrame();
     this.renderReady = true;
 };
 

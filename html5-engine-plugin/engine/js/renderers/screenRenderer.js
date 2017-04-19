@@ -69,6 +69,25 @@ ScreenRenderer.prototype.render = function (context) {
                         }
                         context.closePath();
                         context.stroke();
+
+                        // Draw activation ploygon.
+                        moved = false;
+                        points = sprite.activationPoints;
+                        context.beginPath();
+                        context.lineWidth = "2";
+                        context.strokeStyle = "#FFFF00";
+                        for (var j = 0; j < points.length - 1; j += 2) {
+                            x = sprite.x + points[j];
+                            y = sprite.y + points[j + 1];
+                            if (!moved) {
+                                context.moveTo(x, y);
+                                moved = true;
+                            } else {
+                                context.lineTo(x, y);
+                            }
+                        }
+                        context.closePath();
+                        context.stroke();
                     }
                 }
             });
@@ -126,6 +145,7 @@ ScreenRenderer.prototype.sortSprites = function (layer, player) {
         if (layer === sprite.layer && item.renderReady) {
             sprite.item.x = entity.x;
             sprite.item.y = entity.y;
+            sprite.item.layer = entity.layer;
             layerSprites.push(sprite.item);
         }
     });

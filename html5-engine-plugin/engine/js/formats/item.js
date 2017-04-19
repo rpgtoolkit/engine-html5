@@ -1,8 +1,11 @@
-Item.prototype = new Sprite();
+/* global Sprite */
+
+Item.prototype = Object.create(Sprite.prototype);
 Item.prototype.constructor = Item;
 
 function Item(filename) {
     console.info("Loading Item filename=[%s]", filename);
+    Sprite.call(this);
 
     // TODO: Make the changes here that chrome suggests.
     var req = new XMLHttpRequest();

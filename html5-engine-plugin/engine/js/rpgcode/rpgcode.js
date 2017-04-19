@@ -48,12 +48,9 @@ RPGcode.prototype._animateGeneric = function (generic, resetGraphics, callback) 
 
     Crafty.e("Delay").delay(function () {
         generic.animate(frameRate);
-        Crafty.trigger("Invalidate");
     }, delay, repeat, function () {
         generic.spriteGraphics.active = resetGraphics;
         generic.spriteGraphics.elapsed = 0;
-        Crafty.trigger("Invalidate");
-
         if (callback) {
             callback();
         }
@@ -127,6 +124,18 @@ RPGcode.prototype.clearDialog = function () {
 };
 
 /**
+ * Converts an interal Crafty entity ID to the matching board sprite ID.
+ * 
+ * @param {number} craftyId
+ * @returns {undefined}
+ */
+RPGcode.prototype._convertCraftyId = function(craftyId) {
+    return rpgtoolkit.craftyBoard.board.sprites.findIndex(function(entity) {
+        return entity.getId() === craftyId;
+    });
+};
+
+/**
  * Creates a canvas with the specified width, height, and ID. This canvas will not
  * be drawn until renderNow is called with its ID.
  * 
@@ -167,9 +176,11 @@ RPGcode.prototype.destroyCanvas = function (canvasId) {
  * @param {number} itemId - The index of the item on the board to animate.
  */
 RPGcode.prototype.destroyItem = function (itemId) {
-    if (rpgtoolkit.craftyBoard.board.sprites[itemId]) {
-        rpgtoolkit.craftyBoard.board.sprites[itemId].destroy();
-        delete rpgtoolkit.craftyBoard.board.sprites[itemId];
+    var index = rpgcode._convertCraftyId(itemId);
+    
+    if (index > -1) {
+        rpgtoolkit.craftyBoard.board.sprites[index].destroy();
+        rpgtoolkit.craftyBoard.board.sprites.splice(index, 1);
         Crafty.trigger("Invalidate");
     }
 };
@@ -260,7 +271,41 @@ RPGcode.prototype.fillRect = function (x, y, width, height, canvasId) {
 };
 
 /**
- * Gets the current board's file name and returns it.
+ * Fires a ray from its origin in the direction and report entities that intersect 
+ * with it, given the parameter constraints.
+ *
+ * Raycasting only reports entities, that have the Collision component applied to them.
+ * 
+ * See: 
+ *  http://craftyjs.com/api/Crafty-raycast.html
+ * 
+ * @param {type} origin - the point of origin from which the ray will be cast. The object must contain the properties _x and _y
+ * @param {type} direction - the direction the ray will be cast. It must be normalized. The object must contain the properties x and y.
+ * @param {type} maxDistance - the maximum distance up to which intersections will be found. This is an optional parameter defaulting to Infinity. If it's Infinity find all intersections. If it's negative find only first intersection (if there is one). If it's positive find all intersections up to that distance.
+ * @param {type} comp - check for intersection with entities that have this component applied to them. This is an optional parameter that is disabled by default.
+ * @param {type} sort - whether to sort the returned array by increasing distance. May be disabled to slightly improve performance if sorted results are not needed. Defaults to true.
+ * @returns {unresolved} - an array of raycast-results that may be empty, if no intersection has been found. Otherwise, each raycast-result looks like {obj: Entity, distance: Number, x: Number, y: Number}, describing which obj entity has intersected the ray at intersection point x,y, distance px away from origin.
+ */
+RPGcode.prototype.fireRaycast = function (origin, direction, maxDistance, comp, sort) {
+    var results;
+
+    direction = new Crafty.math.Vector2D(direction.x, direction.y).normalize();
+    console.log(direction);
+    if (maxDistance && comp && sort) {
+        results = Crafty.raycast(origin, direction, maxDistance, comp, sort);
+    } else if (maxDistance && comp) {
+        results = Crafty.raycast(origin, direction, maxDistance, comp);
+    } else if (maxDistance) {
+        results = Crafty.raycast(origin, direction, maxDistance, "Raycastable");
+    } else {
+        results = Crafty.raycast(origin, direction, -1, "Raycastable");
+    }
+
+    return results;
+};
+
+/**
+ * Gets the current board's name and returns it.
  * 
  * @returns {string}
  */
@@ -306,17 +351,27 @@ RPGcode.prototype.getCharacterDirection = function () {
 };
 
 /**
- * Gets the character's current location (in tiles).
+ * Gets the character's current location.
  * 
+ * @param {boolean} inTiles - Should the location be in tiles, otherwise pixels.
  * @returns {array[x, y, z]}
  */
-RPGcode.prototype.getCharacterLocation = function () {
+RPGcode.prototype.getCharacterLocation = function (inTiles) {
     var instance = rpgtoolkit.craftyCharacter;
-    return [
-        instance.x / rpgtoolkit.tileSize,
-        instance.y / rpgtoolkit.tileSize,
-        instance.character.layer
-    ];
+
+    if (inTiles) {
+        return {
+            x: instance.x / rpgtoolkit.craftyBoard.board.tileWidth,
+            y: instance.y / rpgtoolkit.craftyBoard.board.tileHeight,
+            layer: instance.character.layer
+        };
+    } else {
+        return {
+            x: instance.x,
+            y: instance.y,
+            layer: instance.character.layer
+        };
+    }
 };
 
 /**
@@ -364,26 +419,67 @@ RPGcode.prototype.playSound = function (file, loop) {
 };
 
 /**
- * Pushs the item by 8 pixels in the given direction.
+ * Moves the sprite by n pixels in the given direction.
  * 
- * @param {number} item - The index of item on the board to push.
- * @param {string} direction - The direction to push the item in.
+ * @param {number} spriteId - The ID of item on the board to push.
+ * @param {string} direction - The direction to push the item in e.g. NORTH, SOUTH, EAST, WEST.
+ * @param {number} distance - Number of pixels to move.
  */
-RPGcode.prototype.pushItem = function (item, direction) {
-    switch (item) {
+RPGcode.prototype.moveSprite = function (spriteId, direction, distance) {
+    // Quick conversion to Crafty constants: n, s, e, w.
+    direction = direction[0].toLowerCase();
+    
+    switch (spriteId) {
         case "source":
-            rpgcode.source.move(direction, 8);
+            rpgcode.source.move(direction, distance);
+            Crafty.trigger("Invalidate");
             break;
+        default:
+            var index = rpgcode._convertCraftyId(spriteId);
+            if (index > -1) {
+                var entity = rpgtoolkit.craftyBoard.board.sprites[index];
+                entity.move(direction, distance);
+                Crafty.trigger("Invalidate");
+            }
     }
 };
 
 /**
- * Pushs the character by 8 pixels in the given direction.
+ * Moves the character by n pixels in the given direction.
  * 
+ * @param {string} characterId - the id of the character to move. (unused)
  * @param {string} direction - The direction to push the character in.
+ * @param {number} distance - Number of pixels to move.
  */
-RPGcode.prototype.pushCharacter = function (direction) {
-    rpgtoolkit.craftyCharacter.move(direction, 8);
+RPGcode.prototype.moveCharacter = function (characterId, direction, distance) {
+    // TODO: characterId is unused until multiple party members are supported.
+    
+    rpgtoolkit.craftyCharacter.move(direction, distance);
+};
+
+/**
+ * Moves the sprite to the (x, y) position, the sprite will travel for the
+ * supplied duration (milliseconds).
+ * 
+ * A short duration will result in the sprite arriving quicker and vice versa.
+ * 
+ * @param {number} spriteId - The ID of item on the board to push.
+ * @param {number} x - pixel coordinate
+ * @param {number} y - pixel coordinate
+ * @param {number} duration - Time taken for the movement to complete (milliseconds)
+ */
+RPGcode.prototype.moveSpriteTo = function (spriteId, x, y, duration) {
+    switch (spriteId) {
+        case "source":
+            rpgcode.source.tween({x: x, y: y}, duration);
+            break;
+        default:
+            var index = rpgcode._convertCraftyId(spriteId);
+            if (index > -1) {
+                var entity = rpgtoolkit.craftyBoard.board.sprites[index];
+                entity.tween({x: x, y: y}, duration);
+            }
+    }
 };
 
 /**
@@ -547,19 +643,19 @@ RPGcode.prototype.setDialogGraphics = function (profileImage, backgroundImage) {
 /**
  * Sets the location of the item.
  * 
- * @param {number} itemId - The index of the item on the board to move.
+ * @param {number} spriteId - The id of the sprite on the board to move.
  * @param {number} x - In pixels by default.
  * @param {number} y - In pixels by default.
- * @param {number} layer - Target layer to put the item on.
- * @param {boolean} isTiles - Is (x, y) in tile coordinates, defaults to pixels.
+ * @param {number} layer - Target layer to put the sprite on.
+ * @param {boolean} inTiles - Is (x, y) in tile coordinates, defaults to pixels.
  */
-RPGcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
-    if (isTiles) {
+RPGcode.prototype.setSpriteLocation = function (spriteId, x, y, layer, inTiles) {
+    if (inTiles) {
         x *= rpgtoolkit.tileSize;
         y *= rpgtoolkit.tileSize;
     }
 
-    var item = rpgtoolkit.craftyBoard.board.sprites[itemId];
+    var item = rpgtoolkit.craftyBoard.board.sprites[spriteId];
     if (item) {
         item.x = x;
         item.y = y;
@@ -569,12 +665,12 @@ RPGcode.prototype.setItemLocation = function (itemId, x, y, layer, isTiles) {
 };
 
 /**
- * Sets the item's current stance, uses the first frame in the animation.
+ * Sets the sprite's current stance, uses the first frame in the animation.
  * 
- * @param {number} itemId - The index of the item on the board.
+ * @param {number} itemId - The index of the sprite on the board.
  * @param {string} stanceId - The stanceId (animationId) to use.
  */
-RPGcode.prototype.setItemStance = function (itemId, stanceId) {
+RPGcode.prototype.setSpriteStance = function (itemId, stanceId) {
     var entity = rpgtoolkit.craftyBoard.board.sprites[itemId];
     if (entity) {
         entity.sprite.item.changeGraphics(stanceId);

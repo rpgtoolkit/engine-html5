@@ -54,7 +54,6 @@ RPGToolkit.prototype.setup = function (filename) {
 
     // Configure Crafty.
     Crafty.init(this.project.resolutionWidth, this.project.resolutionHeight);
-//    Crafty.canvasLayer.init();
     Crafty.viewport.init(this.project.resolutionWidth, this.project.resolutionHeight);
     Crafty.paths({audio: PATH_MEDIA, images: PATH_BITMAP});
 
@@ -70,6 +69,7 @@ RPGToolkit.prototype.setup = function (filename) {
     // Setup the RPGcode rutime.
     rpgcode = new RPGcode();
 
+    // Load the initial character and board.
     this.loadCharacter(new Character(PATH_CHARACTER + this.project.initialCharacter));
     this.loadBoard(new Board(PATH_BOARD + this.project.initialBoard));
 
@@ -127,7 +127,6 @@ RPGToolkit.prototype.startScene = function () {
         Crafty.trigger("EnterFrame", {});
     }
 };
-
 
 RPGToolkit.prototype.queueCraftyAssets = function (assets, waitingEntity) {
     if (assets.images) {
@@ -208,7 +207,6 @@ RPGToolkit.prototype.createCraftyBoard = function (board) {
 
     var width = board.width * board.tileWidth;
     var height = board.height * board.tileHeight;
-
     Crafty.c("Board", {
         ready: true,
         width: width,
@@ -216,8 +214,13 @@ RPGToolkit.prototype.createCraftyBoard = function (board) {
         init: function () {
             this.addComponent("2D, Canvas");
             this.attr({x: 0, y: 0, w: width, h: height, board: board, show: false});
+            this.bind("EnterFrame", function() {
+               this.trigger("Invalidate"); 
+            });
             this.bind("Draw", function (e) {
-                rpgtoolkit.screen.render(e.ctx);
+                if (e.ctx && this.show) {
+                    rpgtoolkit.screen.render(e.ctx);
+                }
             });
         }
     });
@@ -231,7 +234,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
 
     var craftyBoard = this.createCraftyBoard(board);
     var assets = {"images": [], "audio": {}};
-
+    
     craftyBoard.board.tileSets.forEach(function (file) {
         var tileSet = new TileSet(PATH_TILESET + file);
         rpgtoolkit.tilesets[tileSet.name] = tileSet;
@@ -304,7 +307,6 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
     var tileHeight = this.craftyBoard.board.tileHeight;
     this.craftyCharacter.x = (tileX * tileWidth) + tileWidth / 2;
     this.craftyCharacter.y = (tileY * tileHeight) + tileHeight / 2;
-
 
     console.log("Switching board player location set to x=[%d], y=[%d]",
             this.craftyCharacter.x, this.craftyCharacter.y);
@@ -385,25 +387,46 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
     console.info("Loading sprite=[%s]", JSON.stringify(sprite));
 
     // TODO: width and height of item must contain the collision polygon.
-    var attr = {
+    if (sprite.thread) {
+        sprite.thread = this.openProgram(PATH_PROGRAM + sprite.thread);
+    }
+    Crafty.c("BoardSprite", {
+        ready: true,
+        visible: false,
         x: sprite.x,
         y: sprite.y,
         layer: sprite.layer,
-        w: this.craftyBoard.board.tileWidth,
-        h: this.craftyBoard.board.tileHeight,
+        width: 50,
+        height: 50,
         vectorType: "ITEM",
         sprite: sprite,
-        events: sprite.events
-    };
-    var entity = Crafty.e("2D, Solid, Collision")
-            .attr(attr)
-            .checkHits("Solid")
-            .collision(new Crafty.polygon(sprite.collisionPoints))
-            .bind("HitOn", function (hitData) {
+        events: sprite.events,
+        init: function () {
+            this.requires("2D, Canvas, Tween, Solid, Collision, Raycastable");
+            this.attr({x: sprite.x, y: sprite.y, w: 50, h: 50, show: false});
+            this.checkHits("Solid");
+            this.collision(new Crafty.polygon(sprite.collisionPoints));
+            this.bind("HitOn", function (hitData) {
                 this.sprite.item.checkCollisions(hitData[0], this);
             });
-    entity.visible = false;
+            this.bind("Move", function (from) {
+                // Move activation vector with us.
+                //this.activationVector.x = this.x;
+                //this.activationVector.y = this.y;
+                
+                this.sprite.item.animate(this.dt);
+            });
+            this.bind("EnterFrame", function (event) {
+                this.dt = event.dt / 1000;
 
+                if (this.sprite.thread && this.sprite.item.renderReady) {
+                    this.sprite.thread.apply(this);
+                }
+            });
+        }
+    });
+
+    var entity = Crafty.e("BoardSprite");
     var assets = sprite.item.load();
     this.queueCraftyAssets(assets, sprite.item);
 
@@ -462,7 +485,6 @@ RPGToolkit.prototype.endProgram = function (nextProgram) {
         rpgtoolkit.keyboardHandler.downHandlers = rpgtoolkit.keyDownHandlers;
         rpgtoolkit.keyboardHandler.upHandlers = rpgtoolkit.keyUpHandlers;
         rpgtoolkit.controlEnabled = true;
-        Crafty.trigger("EnterFrame", {});
     }
 };
 
@@ -472,7 +494,7 @@ RPGToolkit.prototype.createVector = function (x1, y1, x2, y2, layer, type, event
     attr.vectorType = type;
     attr.events = events;
 
-    Crafty.e("Solid, Collision")
+    Crafty.e("Solid, Collision, Raycastable")
             .attr(attr);
 };
 
