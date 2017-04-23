@@ -1,10 +1,13 @@
-/* global rpgtoolkit, rpgcode */
+/* global rpgtoolkit, rpgcode, PATH_PROGRAM */
 
 var rpgcode = null; // Setup inside of the engine.
 
 function RPGcode() {
     // The last entity to trigger a program.
     this.source = {};
+
+    // An array of programs that will be run each frame.
+    this.runTimePrograms = [];
 
     this.canvases = {"renderNowCanvas": {
             canvas: rpgtoolkit.screen.renderNowCanvas,
@@ -25,6 +28,19 @@ function RPGcode() {
         lineY: 5
     };
 }
+
+RPGcode.prototype.addRunTimeProgram = function (filename) {
+    this.runTimePrograms.push(filename);
+    this.runTimePrograms = Array.from(new Set(this.runTimePrograms));
+};
+
+RPGcode.prototype.removeRunTimeProgram = function(filename) {
+    var index = this.runTimePrograms.indexOf(filename);
+    
+    if (index > -1) {
+        this.runTimePrograms.splice(index, 1);
+    }
+};
 
 /**
  * Should not be used directly, instead see animateItem and animateCharacter.
@@ -129,8 +145,8 @@ RPGcode.prototype.clearDialog = function () {
  * @param {number} craftyId
  * @returns {undefined}
  */
-RPGcode.prototype._convertCraftyId = function(craftyId) {
-    return rpgtoolkit.craftyBoard.board.sprites.findIndex(function(entity) {
+RPGcode.prototype._convertCraftyId = function (craftyId) {
+    return rpgtoolkit.craftyBoard.board.sprites.findIndex(function (entity) {
         return entity.getId() === craftyId;
     });
 };
@@ -155,10 +171,15 @@ RPGcode.prototype.createCanvas = function (width, height, canvasId) {
  * callback function is invoked.
  * 
  * @param {number} ms - Time to wait in milliseconds.
+ * @param {boolen} loop should the call be indefinite
  * @param {Function} callback - Function to execute after the delay.
  */
-RPGcode.prototype.delay = function (ms, callback) {
-    Crafty.e("Delay").delay(callback, ms);
+RPGcode.prototype.delay = function (ms, callback, loop) {
+    if (loop) {
+        return Crafty.e("Delay").delay(callback, ms, -1);
+    } else {
+        return Crafty.e("Delay").delay(callback, ms);
+    }
 };
 
 /**
@@ -177,7 +198,7 @@ RPGcode.prototype.destroyCanvas = function (canvasId) {
  */
 RPGcode.prototype.destroyItem = function (itemId) {
     var index = rpgcode._convertCraftyId(itemId);
-    
+
     if (index > -1) {
         rpgtoolkit.craftyBoard.board.sprites[index].destroy();
         rpgtoolkit.craftyBoard.board.sprites.splice(index, 1);
@@ -323,6 +344,10 @@ RPGcode.prototype.getGlobal = function (id) {
     return rpgcode.globals[id];
 };
 
+RPGcode.prototype.getCharacter = function() {
+  return rpgtoolkit.craftyCharacter.character;  
+};
+
 /**
  * Gets the character's current direction.
  * 
@@ -386,6 +411,15 @@ RPGcode.prototype.getRandom = function (min, max) {
 };
 
 /**
+ * 
+ * 
+ * @returns {Object} an object with the attributes inProgram (boolean) and the filename of the current running program, if any.
+ */
+RPGcode.prototype.isRunningProgram = function() {
+    return { inProgram: rpgtoolkit.inProgram, currentProgram: rpgtoolkit.currentProgram };
+};
+
+/**
  * Loads the requested assets into the engine, when all of the assets have been loaded
  * the onLoad callback is invoked.
  * 
@@ -428,7 +462,7 @@ RPGcode.prototype.playSound = function (file, loop) {
 RPGcode.prototype.moveSprite = function (spriteId, direction, distance) {
     // Quick conversion to Crafty constants: n, s, e, w.
     direction = direction[0].toLowerCase();
-    
+
     switch (spriteId) {
         case "source":
             rpgcode.source.move(direction, distance);
@@ -453,7 +487,7 @@ RPGcode.prototype.moveSprite = function (spriteId, direction, distance) {
  */
 RPGcode.prototype.moveCharacter = function (characterId, direction, distance) {
     // TODO: characterId is unused until multiple party members are supported.
-    
+
     rpgtoolkit.craftyCharacter.move(direction, distance);
 };
 
@@ -569,6 +603,16 @@ RPGcode.prototype.removeTile = function (tileX, tileY, layer) {
  */
 RPGcode.prototype.restart = function () {
     location.reload(); // Cheap way to implement game restart for the moment.
+};
+
+/**
+ * Runs the requested program.
+ * 
+ * @param {type} filename
+ * @returns {undefined}
+ */
+RPGcode.prototype.runProgram = function(filename) {
+    rpgtoolkit.runProgram(PATH_PROGRAM + filename, rpgcode, null);
 };
 
 /**

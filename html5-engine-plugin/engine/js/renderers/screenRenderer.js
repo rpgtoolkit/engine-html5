@@ -12,6 +12,12 @@ ScreenRenderer.prototype.render = function (context) {
     var width = Crafty.viewport._width;
     var height = Crafty.viewport._height;
 
+    if (/Edge/.test(navigator.userAgent)) {
+        // Handle Edge bug when drawing up to the bounds of a canvas.
+        width -= 2;
+        height -= 2;
+    }
+
     // Shorthand reference.
     var character = rpgtoolkit.craftyCharacter.character;
     character.x = rpgtoolkit.craftyCharacter.x;
@@ -46,9 +52,11 @@ ScreenRenderer.prototype.render = function (context) {
             layerSprites.forEach(function (sprite) {
                 if (sprite.layer === i) {
                     var frame = sprite.getActiveFrame();
-                    var x = sprite.x - (frame.width / 2);
-                    var y = sprite.y - (frame.height / 2);
-                    context.drawImage(frame, x, y);
+                    if (frame) {
+                        var x = sprite.x - (frame.width / 2);
+                        var y = sprite.y - (frame.height / 2);
+                        context.drawImage(frame, x, y);
+                    }
 
                     if (rpgtoolkit.isShowVectors) {
                         // Draw collision ploygon.

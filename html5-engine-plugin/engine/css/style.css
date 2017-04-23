@@ -3,6 +3,17 @@ body {
     color: white;
 }
 
+#window {
+    margin: auto;
+    width: 640px;
+    height: 480px;
+}
+
+.screen {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
 
 #gameboy {
     margin: auto;
@@ -11,7 +22,7 @@ body {
     background-image: url("../images/gameboy.png");
 }
 
-.screen {
+.gameboy-screen {
     position: absolute;
     top: 192px;
     left: 242px;

@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <!-- TODO Replace with minified version when production ready. -->
-        <script src="../js/lib/crafty0.7.1.js"></script>
+        <script src="../js/lib/crafty.0.8.0.js"></script>
 
         <!-- I/O Libraries -->
         <script src="../js/formats/board.js"></script>
@@ -17,41 +17,47 @@
     </head>
     <body>
         <script>
-            var board = new Board("Test.board");
-            
-            var images = [];
-            var tileSets = [];
-            board.tileSets.forEach(function(file) {
-                var tileSet = new Tileset(file);
-                tileSets.push(tileSet);
-                images.push.apply(images, tileSet.images);
-            });
-            
-            var assets = {"images": images};
-            console.log(assets);
-            Crafty.load(assets, // WE KEEP RESETTING THE CALLBACKS HERE!!! FIX IT!!!
-                    function () {
-                        // loaded
-                        console.log("loaded");
-                        console.log(Crafty.assets);
-                        
-                        tileSets.forEach(function(tileSet) {
-                            tileSet.load();
-                            rpgtoolkit.tilesets[tileSet.name] = tileSet;
-                        });
-                        
-                        board.generateLayerCache();
-                        document.body.appendChild(board.layerCache[0]);
-//                        var renderer = new TilesetRenderer(tileSet);
-//                        document.body.appendChild(renderer.render());
-                    },
-                    function (e) {
-                        // progress
-                    },
-                    function (e) {
-                        // uh oh, error loading
-                    }
-            );
+// Init Crafty:
+Crafty.init(600, 400);
+
+Crafty.c('Line', {
+    ready: true,
+    init: function () {
+        this.h = 400;
+        this.bind("Draw", this.drawLine);
+        this.requires("2D, Canvas, Tween");
+        this.w = 600;
+        Object.defineProperty(this, "toX", {
+            get: function () {
+                return this._toX;
+            },
+            set: function (newValue) {
+                this._toX = newValue;
+                this.trigger("Invalidate");
+            }
+        });
+    },
+    drawLine: function (e) {
+        var ctx = e.ctx;
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "black";
+
+        ctx.beginPath();
+        ctx.moveTo(this._fromX, this._lineY);
+        ctx.lineTo(this.toX, this._lineY);
+        ctx.lineTo(this.toX - 10, this._lineY - 10);
+        ctx.moveTo(this.toX, this._lineY);
+        ctx.lineTo(this.toX - 10, this._lineY + 10);
+        ctx.stroke();
+    }
+});
+
+Crafty.e("Line")
+.attr({x: 10, y: 100, toX: 20, _lineY: 125, _fromX: 20})
+.tween({toX: 400}, 500);
+
+Crafty.e('2D, Canvas, Color, Draggable').attr({x: 10, y: 10, w: 50, h: 50}).color('Red');
         </script>
     </body>
 </html>
