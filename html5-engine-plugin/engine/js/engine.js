@@ -36,13 +36,35 @@ function RPGToolkit() {
 
     // Is this the first game scene.
     this.firstScene = true;
-    
+
     // Engine program states.
     this.inProgram = false;
     this.currentProgram = null;
 
     // Debugging options.
     this.showVectors = false;
+
+    // Custom crafty components.
+    Crafty.c("BaseVector", {
+        BaseVector: function (polygon, hiton, hitoff) {
+            this.requires("Collision, BASE");
+            this.collision(polygon);
+            this.checkHits("SOLID, BASE");
+            this.bind("HitOn", hiton);
+            this.bind("HitOff", hitoff);
+            return this;
+        }
+    });
+    Crafty.c("ActivationVector", {
+        ActivationVector: function (polygon, hiton, hitoff) {
+            this.requires("Collision, ACTIVATION");
+            this.collision(polygon);
+            this.checkHits("PASSABLE, ACTIVATION");
+            this.bind("HitOn", hiton);
+            this.bind("HitOff", hitoff);
+            return this;
+        }
+    });
 }
 
 /**
@@ -117,7 +139,7 @@ RPGToolkit.prototype.startScene = function () {
     if (rpgtoolkit.firstScene) {
         rpgtoolkit.firstScene = false;
     }
-    
+
     rpgtoolkit.craftyBoard.show = true;
     if (rpgtoolkit.craftyBoard.board.backgroundMusic) {
         rpgtoolkit.playSound(rpgtoolkit.craftyBoard.board.backgroundMusic, -1);
@@ -220,17 +242,17 @@ RPGToolkit.prototype.createCraftyBoard = function (board) {
         init: function () {
             this.addComponent("2D, Canvas");
             this.attr({x: 0, y: 0, w: width, h: height, board: board, show: false});
-            this.bind("EnterFrame", function() {
-               this.trigger("Invalidate"); 
+            this.bind("EnterFrame", function () {
+                this.trigger("Invalidate");
             });
             this.bind("Draw", function (e) {
                 if (e.ctx) {
                     // Excute the user specified runtime programs first.
-                    rpgcode.runTimePrograms.forEach(function(filename) {
-                       var program = rpgtoolkit.openProgram(PATH_PROGRAM + filename);
-                       program();
+                    rpgcode.runTimePrograms.forEach(function (filename) {
+                        var program = rpgtoolkit.openProgram(PATH_PROGRAM + filename);
+                        program();
                     });
-                    
+
                     rpgtoolkit.screen.render(e.ctx);
                 }
             });
@@ -246,7 +268,7 @@ RPGToolkit.prototype.loadBoard = function (board) {
 
     var craftyBoard = this.createCraftyBoard(board);
     var assets = {"images": [], "audio": {}};
-    
+
     craftyBoard.board.tileSets.forEach(function (file) {
         var tileSet = new TileSet(PATH_TILESET + file);
         rpgtoolkit.tilesets[tileSet.name] = tileSet;
@@ -309,7 +331,8 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
 
     this.controlEnabled = false;
 
-    Crafty("Solid").destroy();
+    Crafty("SOLID").destroy();
+    Crafty("PASSABLE").destroy();
     Crafty("Board").destroy();
     Crafty.audio.stop();
 
@@ -317,8 +340,8 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
 
     var tileWidth = this.craftyBoard.board.tileWidth;
     var tileHeight = this.craftyBoard.board.tileHeight;
-    this.craftyCharacter.x = (tileX * tileWidth) + tileWidth / 2;
-    this.craftyCharacter.y = (tileY * tileHeight) + tileHeight / 2;
+    this.craftyCharacter.x = parseInt((tileX * tileWidth) + tileWidth / 2);
+    this.craftyCharacter.y = parseInt((tileY * tileHeight) + tileHeight / 2);
 
     console.log("Switching board player location set to x=[%d], y=[%d]",
             this.craftyCharacter.x, this.craftyCharacter.y);
@@ -329,37 +352,6 @@ RPGToolkit.prototype.switchBoard = function (boardName, tileX, tileY) {
 RPGToolkit.prototype.loadCharacter = function (character) {
     console.info("Loading character=[%s]", JSON.stringify(character));
 
-    Crafty.c("BaseVector", {
-        BaseVector: function (polygon) {
-            this.requires("Collision");
-            this.collision(polygon);
-            this.checkHits("Solid");
-
-            this.bind("HitOn", function (hitData) {
-                rpgtoolkit.craftyCharacter.character.checkCollisions(hitData[0], this);
-            });
-            this.bind("HitOff", function (comp) {
-            });
-
-            return this;
-        }
-    });
-    Crafty.c("ActivationVector", {
-        ActivationVector: function (polygon) {
-            this.requires("Collision");
-            this.collision(polygon);
-            this.checkHits("Solid");
-
-            this.bind("HitOn", function (hitData) {
-                rpgtoolkit.craftyCharacter.character.checkActivations(hitData, this);
-            });
-            this.bind("HitOff", function (comp) {
-            });
-
-            return this;
-        }
-    });
-
     // Have to keep this in a separate entity, as Crafty entites can
     // only have 1 collision polygon at a time, using composition to
     // get around this limitation.
@@ -368,8 +360,15 @@ RPGToolkit.prototype.loadCharacter = function (character) {
                 x: character.x,
                 y: character.y,
                 character: character})
-            .ActivationVector(new Crafty.polygon(character.activationPoints));
-
+            .ActivationVector(
+                    new Crafty.polygon(character.activationPoints),
+                    function (hitData) {
+                        character.hitOnActivation(hitData, rpgtoolkit.craftyCharacter);
+                    },
+                    function (hitData) {
+                        character.hitOffActivation(hitData, rpgtoolkit.craftyCharacter);
+                    }
+            );
     this.craftyCharacter = Crafty.e("2D, Canvas, player, CustomControls, BaseVector")
             .attr({
                 x: character.x,
@@ -378,7 +377,15 @@ RPGToolkit.prototype.loadCharacter = function (character) {
                 activationVector: activationVector
             })
             .CustomControls(1)
-            .BaseVector(new Crafty.polygon(character.collisionPoints))
+            .BaseVector(
+                    new Crafty.polygon(character.collisionPoints),
+                    function (hitData) {
+                        character.hitOnCollision(hitData, rpgtoolkit.craftyCharacter);
+                    },
+                    function (hitData) {
+                        character.hitOffCollision(hitData, rpgtoolkit.craftyCharacter);
+                    }
+            )
             .bind("Moved", function (from) {
                 // Move activation vector with us.
                 this.activationVector.x = this.x;
@@ -402,6 +409,30 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
     if (sprite.thread) {
         sprite.thread = this.openProgram(PATH_PROGRAM + sprite.thread);
     }
+    var entity = Crafty.e("BaseVector")
+            .BaseVector(
+                    new Crafty.polygon(sprite.item.collisionPoints),
+                    function (hitData) {
+                        sprite.item.hitOnCollision(hitData, entity);
+                    },
+                    function (hitData) {
+                        sprite.item.hitOffCollision(hitData, entity);
+                    }
+            );
+    var activationVector = Crafty.e("2D, Canvas, ActivationVector")
+            .attr({
+                x: sprite.x,
+                y: sprite.y,
+                sprite: sprite})
+            .ActivationVector(
+                    new Crafty.polygon(sprite.item.activationPoints),
+                    function (hitData) {
+                        sprite.item.hitOnActivation(hitData, entity);
+                    },
+                    function (hitData) {
+                        sprite.item.hitOffActivation(hitData, entity);
+                    }
+            );
     Crafty.c("BoardSprite", {
         ready: true,
         visible: false,
@@ -413,19 +444,15 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
         vectorType: "ITEM",
         sprite: sprite,
         events: sprite.events,
+        activationVector: activationVector,
         init: function () {
-            this.requires("2D, Canvas, Tween, Solid, Collision, Raycastable");
+            this.requires("2D, Canvas, Tween, BaseVector, Raycastable");
             this.attr({x: sprite.x, y: sprite.y, w: 50, h: 50, show: false});
-            this.checkHits("Solid");
-            this.collision(new Crafty.polygon(sprite.collisionPoints));
-            this.bind("HitOn", function (hitData) {
-                this.sprite.item.checkCollisions(hitData[0], this);
-            });
             this.bind("Move", function (from) {
                 // Move activation vector with us.
-                //this.activationVector.x = this.x;
-                //this.activationVector.y = this.y;
-                
+                this.activationVector.x = entity.x;
+                this.activationVector.y = entity.y;
+
                 this.sprite.item.animate(this.dt);
             });
             this.bind("EnterFrame", function (event) {
@@ -437,8 +464,8 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
             });
         }
     });
+    entity.addComponent("BoardSprite");
 
-    var entity = Crafty.e("BoardSprite");
     var assets = sprite.item.load();
     this.queueCraftyAssets(assets, sprite.item);
 
@@ -510,7 +537,7 @@ RPGToolkit.prototype.createVector = function (x1, y1, x2, y2, layer, type, event
     attr.vectorType = type;
     attr.events = events;
 
-    Crafty.e("Solid, Collision, Raycastable")
+    Crafty.e(type + ", Collision, Raycastable")
             .attr(attr);
 };
 

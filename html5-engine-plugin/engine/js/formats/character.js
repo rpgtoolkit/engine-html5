@@ -21,3 +21,19 @@ function Character(filename) {
     this.calculateCollisionPoints();
     this.calculateActivationPoints();
 }
+
+Character.prototype.hitOnCollision = function(hitData, entity) {
+    this.checkCollisions(hitData[0], entity);
+};
+
+Character.prototype.hitOffCollision = function(hitData, entity) {
+    // Not used yet.
+};
+
+Character.prototype.hitOnActivation = function(hitData, entity) {
+    this.checkActivations(hitData, entity);
+};
+
+Character.prototype.hitOffActivation = function(hitData, entity) {
+    // Not used yet.
+};

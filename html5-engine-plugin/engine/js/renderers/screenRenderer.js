@@ -53,12 +53,12 @@ ScreenRenderer.prototype.render = function (context) {
                 if (sprite.layer === i) {
                     var frame = sprite.getActiveFrame();
                     if (frame) {
-                        var x = sprite.x - (frame.width / 2);
-                        var y = sprite.y - (frame.height / 2);
+                        var x = parseInt(sprite.x - (frame.width / 2));
+                        var y = parseInt(sprite.y - (frame.height / 2));
                         context.drawImage(frame, x, y);
                     }
 
-                    if (rpgtoolkit.isShowVectors) {
+                    if (rpgtoolkit.showVectors) {
                         // Draw collision ploygon.
                         var x, y, moved = false;
                         var points = sprite.collisionPoints;
@@ -100,7 +100,7 @@ ScreenRenderer.prototype.render = function (context) {
                 }
             });
 
-            if (rpgtoolkit.isShowVectors) {
+            if (rpgtoolkit.showVectors) {
                 /*
                  * (Optional) Render Vectors.
                  */
@@ -109,7 +109,7 @@ ScreenRenderer.prototype.render = function (context) {
                     if (vector.type === "SOLID") {
                         context.strokeStyle = "#FF0000";
                     } else if (vector.type === "PASSABLE") {
-                        context.strokeStyle = "#FFFFFF";
+                        context.strokeStyle = "#FFFF00";
                     }
                     context.lineWidth = 2.0;
                     context.beginPath();

@@ -415,7 +415,7 @@ RPGcode.prototype.getRandom = function (min, max) {
  * 
  * @returns {Object} an object with the attributes inProgram (boolean) and the filename of the current running program, if any.
  */
-RPGcode.prototype.isRunningProgram = function() {
+RPGcode.prototype.getRunningProgram = function() {
     return { inProgram: rpgtoolkit.inProgram, currentProgram: rpgtoolkit.currentProgram };
 };
 
