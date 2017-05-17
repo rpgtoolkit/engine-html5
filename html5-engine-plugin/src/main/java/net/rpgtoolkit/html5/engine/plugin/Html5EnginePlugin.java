@@ -11,6 +11,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.net.URI;
 import java.util.Collection;
+import javax.swing.ProgressMonitor;
 import net.lingala.zip4j.core.ZipFile;
 import net.rpgtoolkit.pluginsystem.Engine;
 import org.apache.commons.io.FileExistsException;
@@ -39,40 +40,50 @@ public class Html5EnginePlugin extends Plugin {
 
     @Override
     public void start() {
-        System.out.println("Html5EnginePlugin.start()");
+        
     }
 
     @Override
     public void stop() {
-        System.out.println("WelcomePlugin.stop()");
+        
     }
 
     @Extension
     public static class Html5Engine implements Engine {
 
-        public void run(String projectName, File projectCopy) throws Exception {
-            embedEngine(projectName, projectCopy);
+        public void run(String projectName, File projectCopy, ProgressMonitor progressMonitor) throws Exception {
+            embedEngine(projectName, projectCopy, progressMonitor);
             startEmbeddedServer(projectCopy.getAbsolutePath());
+            
+            // 75% 
+            progressMonitor.setProgress(75);
             openDefaultBrowser();
+            
+            // 100% 
+            progressMonitor.setProgress(100);
         }
         
-        public void stop() throws Exception {
+        public void stop(ProgressMonitor progressMonitor) throws Exception {
             ENGINE_RUNNABLE.stop();
+            progressMonitor.setProgress(50);
             FileUtils.deleteQuietly(TEMP_PROJECT);
+            progressMonitor.setProgress(100);
         }
 
-        private void embedEngine(String title, File destination) throws Exception {
+        private void embedEngine(String title, File destination, ProgressMonitor progressMonitor) throws Exception {
             TEMP_PROJECT = destination;
-            
             String destinationPath = destination.getAbsolutePath();
             
-            // Copy and extract engine zip in destination directory.     
+            // Copy and extract engine zip in destination directory.
             String engineZipName = "engine-html5.zip";
             File engineZip = new File(destinationPath + "/" + engineZipName);
             FileUtils.copyInputStreamToFile(getClass().getResourceAsStream("/" + engineZipName), engineZip);
             
             ZipFile zipFile = new ZipFile(destinationPath + "/" + engineZip.getName());
             zipFile.extractAll(destinationPath);
+            
+            // 25%
+            progressMonitor.setProgress(25);
 
             // Clean up the zip.
             FileUtils.deleteQuietly(new File(destinationPath + "/" + engineZip.getName()));
@@ -93,6 +104,9 @@ public class Html5EnginePlugin extends Plugin {
             } catch (FileExistsException ex) {
                 // Their project is called "default".
             }
+            
+            // 50% 
+            progressMonitor.setProgress(50);
 
             // Modify index.html file for this project.
             File indexFile = new File(destinationPath + "/index.html");
@@ -117,16 +131,6 @@ public class Html5EnginePlugin extends Plugin {
             }
         }
 
-    }
-
-    // For testing.
-    public static void main(String[] args) throws Exception {
-        Html5EnginePlugin.Html5Engine h = new Html5EnginePlugin.Html5Engine();
-        h.run("The Wizard's Tower-JS", new File("C:\\Users\\user\\Desktop\\The Wizard's Tower-JS"));
-        
-        Thread.sleep(10000);
-        
-        h.stop();
     }
 
 }

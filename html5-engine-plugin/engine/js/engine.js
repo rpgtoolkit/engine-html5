@@ -47,7 +47,7 @@ function RPGToolkit() {
     // Custom crafty components.
     Crafty.c("BaseVector", {
         BaseVector: function (polygon, hiton, hitoff) {
-            this.requires("Collision, BASE");
+            this.requires("Collision, BASE, Raycastable");
             this.collision(polygon);
             this.checkHits("SOLID, BASE");
             this.bind("HitOn", hiton);
@@ -57,7 +57,7 @@ function RPGToolkit() {
     });
     Crafty.c("ActivationVector", {
         ActivationVector: function (polygon, hiton, hitoff) {
-            this.requires("Collision, ACTIVATION");
+            this.requires("Collision, ACTIVATION, Raycastable");
             this.collision(polygon);
             this.checkHits("PASSABLE, ACTIVATION");
             this.bind("HitOn", hiton);
@@ -439,14 +439,14 @@ RPGToolkit.prototype.loadSprite = function (sprite) {
         x: sprite.x,
         y: sprite.y,
         layer: sprite.layer,
-        width: 50,
-        height: 50,
+        width: 150,
+        height: 150,
         vectorType: "ITEM",
         sprite: sprite,
         events: sprite.events,
         activationVector: activationVector,
         init: function () {
-            this.requires("2D, Canvas, Tween, BaseVector, Raycastable");
+            this.requires("2D, Canvas, Tween, BaseVector");
             this.attr({x: sprite.x, y: sprite.y, w: 50, h: 50, show: false});
             this.bind("Move", function (from) {
                 // Move activation vector with us.

@@ -311,7 +311,6 @@ RPGcode.prototype.fireRaycast = function (origin, direction, maxDistance, comp, 
     var results;
 
     direction = new Crafty.math.Vector2D(direction.x, direction.y).normalize();
-    console.log(direction);
     if (maxDistance && comp && sort) {
         results = Crafty.raycast(origin, direction, maxDistance, comp, sort);
     } else if (maxDistance && comp) {
