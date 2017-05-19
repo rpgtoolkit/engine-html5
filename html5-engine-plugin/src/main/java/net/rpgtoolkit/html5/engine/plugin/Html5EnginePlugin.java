@@ -40,12 +40,12 @@ public class Html5EnginePlugin extends Plugin {
 
     @Override
     public void start() {
-        
+
     }
 
     @Override
     public void stop() {
-        
+
     }
 
     @Extension
@@ -54,15 +54,19 @@ public class Html5EnginePlugin extends Plugin {
         public void run(String projectName, File projectCopy, ProgressMonitor progressMonitor) throws Exception {
             embedEngine(projectName, projectCopy, progressMonitor);
             startEmbeddedServer(projectCopy.getAbsolutePath());
-            
+
             // 75% 
             progressMonitor.setProgress(75);
             openDefaultBrowser();
-            
+
             // 100% 
             progressMonitor.setProgress(100);
         }
-        
+
+        public void stop() throws Exception {
+            ENGINE_RUNNABLE.stop();
+        }
+
         public void stop(ProgressMonitor progressMonitor) throws Exception {
             ENGINE_RUNNABLE.stop();
             progressMonitor.setProgress(50);
@@ -73,15 +77,15 @@ public class Html5EnginePlugin extends Plugin {
         private void embedEngine(String title, File destination, ProgressMonitor progressMonitor) throws Exception {
             TEMP_PROJECT = destination;
             String destinationPath = destination.getAbsolutePath();
-            
+
             // Copy and extract engine zip in destination directory.
             String engineZipName = "engine-html5.zip";
             File engineZip = new File(destinationPath + "/" + engineZipName);
             FileUtils.copyInputStreamToFile(getClass().getResourceAsStream("/" + engineZipName), engineZip);
-            
+
             ZipFile zipFile = new ZipFile(destinationPath + "/" + engineZip.getName());
             zipFile.extractAll(destinationPath);
-            
+
             // 25%
             progressMonitor.setProgress(25);
 
@@ -104,7 +108,7 @@ public class Html5EnginePlugin extends Plugin {
             } catch (FileExistsException ex) {
                 // Their project is called "default".
             }
-            
+
             // 50% 
             progressMonitor.setProgress(50);
 

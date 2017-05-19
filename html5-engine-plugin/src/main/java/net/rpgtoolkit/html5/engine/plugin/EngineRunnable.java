@@ -29,6 +29,7 @@ public class EngineRunnable implements Runnable {
 
     public void run() {
         server = new Server(8080);
+        server.setStopAtShutdown(true);
 
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
